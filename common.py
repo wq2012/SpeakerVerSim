@@ -1,10 +1,10 @@
 import simpy
 from typing import Sequence, Optional
-from dataclasses import dataclass
-from abc import ABC
+import dataclasses
+import abc
 
 
-@dataclass
+@dataclasses.dataclass
 class Message:
     """A message being communicated between actors."""
     # Unique ID of the user.
@@ -12,6 +12,9 @@ class Message:
 
     # Whether this is a request or response.
     is_request: bool = True
+
+    # Whether this is an enrollment or runtime request/response.
+    is_enroll: bool = False
 
     # Timing information.
     client_send_time: Optional[float] = None
@@ -22,23 +25,46 @@ class Message:
     client_return_time: Optional[float] = None
 
 
-class Actor(ABC):
+class Actor(abc.ABC):
     """An actor machine which can be either client or server."""
+
     def __init__(self, env: simpy.Environment, name: str):
         self.env = env
         self.name = name
 
         # A pool of requests to be processed.
         self.request_pool = simpy.Store(env)
-        
+
+    @abc.abstractmethod
+    def run() -> None:
+        pass
+
+
+class BaseClient(Actor):
+    def set_frontend(self, frontend: Actor) -> None:
+        self.frontend = frontend
+
+
+class BaseFrontend(Actor):
+    def set_client(self, client: Actor) -> None:
+        self.client = client
+
+    def set_workers(self, workers: Sequence[Actor]) -> None:
+        self.workers = workers
+
+
+class BaseCloudWorker(Actor):
+    def set_frontend(self, frontend: Actor) -> None:
+        self.frontend = frontend
+
 
 class NetworkSystem:
     def __init__(
             self,
             env: simpy.Environment,
-            client: Actor,
-            frontend: Actor,
-            workers: Sequence[Actor]):
+            client: BaseClient,
+            frontend: BaseFrontend,
+            workers: Sequence[BaseCloudWorker]):
         self.env = env
 
         # Set actors.
