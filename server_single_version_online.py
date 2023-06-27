@@ -4,12 +4,22 @@ import random
 from typing import Generator
 
 from common import (Message, BaseClient, BaseFrontend,
-                    BaseCloudWorker, NetworkSystem)
+                    BaseWorker, NetworkSystem)
 
+# How may cloud workers do we have in total.
 NUM_CLOUD_WORKERS = 10
+
+# Latency between client and frontend server.
 CLIENT_FRONTEND_LATENCY = 0.1
+
+# Latency between frontend server and cloud worker.
 FRONTEND_WORKER_LATENCY = 0.002
-WORKERL_LATENCY = 0.5
+
+# Latency to run speech inference engine.
+WORKER_INFERENCE_LATENCY = 0.5
+
+# Flops cost to run one inference.
+FLOPS_PER_INFERENCE = 1000000
 
 
 class Client(BaseClient):
@@ -17,53 +27,89 @@ class Client(BaseClient):
     REQUEST_INTERVAL = 10
 
     def run(self) -> Generator:
+        self.env.process(self.receive_frontend_responses())
         while True:
-            self.env.process(self.send_frontend_request())
+            self.env.process(self.send_one_frontend_request())
             yield self.env.timeout(self.REQUEST_INTERVAL)
 
-    def send_frontend_request(self):
-        # Simulate network latency.
-        print(f"Client put request at time {self.env.now}")
+    def send_one_frontend_request(self) -> Generator:
+        """Send one request to frontend."""
+        print(f"{self.name} send request at time {self.env.now}")
         msg = Message(
             user_id=0,
             is_request=True,
             is_enroll=False,
             client_send_time=self.env.now,
         )
+        # Simulate network latency.
         yield self.env.timeout(CLIENT_FRONTEND_LATENCY)
-        self.frontend.request_pool.put(msg)
+        self.frontend.message_pool.put(msg)
+
+    def receive_frontend_responses(self) -> Generator:
+        """Receive the final responses."""
+        while True:
+            msg = yield self.message_pool.get()
+            print(f"{self.name} receive response at time {self.env.now}")
+            msg.client_return_time = self.env.now
+            self.final_messages.append(msg)
 
 
 class Frontend(BaseFrontend):
 
     def run(self) -> Generator:
         while True:
-            msg = yield self.request_pool.get()
-            worker = random.choice(self.workers)
-            self.env.process(self.send_worker_request(worker, msg))
+            msg = yield self.message_pool.get()
+            if msg.is_request:
+                # Send request to a random worker.
+                worker = random.choice(self.workers)
+                self.env.process(self.send_worker_request(worker, msg))
+            else:
+                # Send response back to client.
+                self.env.process(self.send_client_response(msg))
 
-    def send_worker_request(self, worker: BaseCloudWorker, msg: Message):
-        # Simulate network latency.
-        print(f"Frontend put request at time {self.env.now}")
+    def send_worker_request(self, worker: BaseWorker, msg: Message
+                            ) -> Generator:
+        """Send request to worker."""
+        print(f"{self.name} send request at time {self.env.now}")
         msg.frontend_send_time = self.env.now
+        # Simulate network latency.
         yield self.env.timeout(FRONTEND_WORKER_LATENCY)
-        worker.request_pool.put(msg)
+        worker.message_pool.put(msg)
+
+    def send_client_response(self, msg: Message) -> Generator:
+        """Send response back to client."""
+        print(f"{self.name} receive response at time {self.env.now}")
+        msg.frontend_return_time = self.env.now
+        # Simulate network latency.
+        yield self.env.timeout(CLIENT_FRONTEND_LATENCY)
+        self.client.message_pool.put(msg)
 
 
-class CloudWorker(BaseCloudWorker):
+class CloudWorker(BaseWorker):
 
     def run(self) -> Generator:
         while True:
-            msg = yield self.request_pool.get()
-            self.env.process(self.handle_request(msg))
+            msg = yield self.message_pool.get()
+            if msg.is_request:
+                self.env.process(self.handle_request(msg))
 
-    def handle_request(self, msg: Message):
-        # Simulate computation latency.
-        print(f"Worker handle request at time {self.env.now}")
+    def handle_request(self, msg: Message) -> Generator:
+        """Handle a request and convert it to reponse."""
+        print(f"{self.name} handle request at time {self.env.now}")
         msg.worker_send_time = self.env.now
-        yield self.env.timeout(WORKERL_LATENCY)
-        print(f"Worker complete request at time {self.env.now}")
+        msg.worker_name = self.name
+
+        # Simulate computation latency.
+        yield self.env.timeout(WORKER_INFERENCE_LATENCY)
+        msg.total_flops += FLOPS_PER_INFERENCE
+        print(f"{self.name} complete request at time {self.env.now}")
+
+        # Send response back to frontend.
         msg.worker_return_time = self.env.now
+        msg.is_request = False
+        # Simulate network latency.
+        yield self.env.timeout(FRONTEND_WORKER_LATENCY)
+        self.frontend.message_pool.put(msg)
 
 
 def main():
@@ -72,13 +118,15 @@ def main():
     frontend = Frontend(env, "frontend")
     workers = [
         CloudWorker(env, f"worker-{i}") for i in range(NUM_CLOUD_WORKERS)]
-    NetworkSystem(
+    netsys = NetworkSystem(
         env,
         client,
         frontend,
         workers)
 
-    env.run(until=100)
+    env.run(until=20)
+    for msg in netsys.client.final_messages:
+        print(msg)
 
 
 if __name__ == "__main__":

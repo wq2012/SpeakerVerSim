@@ -7,6 +7,7 @@ import abc
 @dataclasses.dataclass
 class Message:
     """A message being communicated between actors."""
+
     # Unique ID of the user.
     user_id: int = 0
 
@@ -15,6 +16,12 @@ class Message:
 
     # Whether this is an enrollment or runtime request/response.
     is_enroll: bool = False
+
+    # Total flops used to process this request.
+    total_flops: float = 0
+
+    # Which worker handled this request.
+    worker_name: str = ""
 
     # Timing information.
     client_send_time: Optional[float] = None
@@ -32,8 +39,11 @@ class Actor(abc.ABC):
         self.env = env
         self.name = name
 
-        # A pool of requests to be processed.
-        self.request_pool = simpy.Store(env)
+        # A pool of messages to be processed.
+        self.message_pool = simpy.Store(env)
+
+        # Final messages for logging.
+        self.final_messages = []
 
     @abc.abstractmethod
     def run() -> None:
@@ -41,11 +51,15 @@ class Actor(abc.ABC):
 
 
 class BaseClient(Actor):
+    """Base class for a client."""
+
     def set_frontend(self, frontend: Actor) -> None:
         self.frontend = frontend
 
 
 class BaseFrontend(Actor):
+    """Base class for a frontend server."""
+
     def set_client(self, client: Actor) -> None:
         self.client = client
 
@@ -53,18 +67,22 @@ class BaseFrontend(Actor):
         self.workers = workers
 
 
-class BaseCloudWorker(Actor):
+class BaseWorker(Actor):
+    """Base class for a cloud worker."""
+
     def set_frontend(self, frontend: Actor) -> None:
         self.frontend = frontend
 
 
 class NetworkSystem:
+    """Class for the entire network system."""
+
     def __init__(
             self,
             env: simpy.Environment,
             client: BaseClient,
             frontend: BaseFrontend,
-            workers: Sequence[BaseCloudWorker]):
+            workers: Sequence[BaseWorker]):
         self.env = env
 
         # Set actors.
