@@ -4,6 +4,9 @@ from typing import Sequence
 import random
 
 NUM_CLOUD_WORKERS = 10
+CLIENT_FRONTEND_LATENCY = 0.1
+FRONTEND_WORKER_LATENCY = 0.002
+WORKERL_LATENCY = 0.5
 
 
 class Actor(ABC):
@@ -22,9 +25,14 @@ class Client(Actor):
 
     def run(self):
         while True:
-            self.frontend.task_pool.put("req")
-            print(f"Client put request at time {self.env.now}")
+            self.env.process(self.send_frontend_request())
             yield self.env.timeout(self.REQUEST_INTERVAL)
+
+    def send_frontend_request(self):
+        # Simulate network latency.
+        print(f"Client put request at time {self.env.now}")
+        yield self.env.timeout(CLIENT_FRONTEND_LATENCY)
+        self.frontend.task_pool.put("req")
             
 
 class Frontend(Actor):
@@ -42,8 +50,13 @@ class Frontend(Actor):
         while True:
             item = yield self.task_pool.get()
             worker = random.choice(self.workers)
-            worker.task_pool.put(item)
-            print(f"Frontend put request at time {self.env.now}")
+            self.env.process(self.send_worker_request(worker, item))
+
+    def send_worker_request(self, worker: Actor, item: str):
+        # Simulate network latency.
+        print(f"Frontend put request at time {self.env.now}")
+        yield self.env.timeout(FRONTEND_WORKER_LATENCY)
+        worker.task_pool.put(item)
 
 
 class CloudWorker(Actor):
@@ -58,7 +71,13 @@ class CloudWorker(Actor):
     def run(self):
         while True:
             item = yield self.task_pool.get()
-            print(f"Worker {self.name} put request at time {self.env.now}")
+            self.env.process(self.handle_request(item))
+
+    def handle_request(self, item: str):
+        # Simulate computation latency.
+        print(f"Worker handle request at time {self.env.now}")
+        yield self.env.timeout(WORKERL_LATENCY)
+        print(f"Worker complete request at time {self.env.now}")
 
 
 class NetworkSystem:
