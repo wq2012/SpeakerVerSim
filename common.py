@@ -30,20 +30,31 @@ class Message:
 
     # Timing information.
     client_send_time: Optional[float] = None
-    frontend_fetch_database_time: Optional[float] = None
+    fetch_database_time: Optional[float] = None
     frontend_send_worker_time: Optional[float] = None
+    database_udpate_time: Optional[float] = None
     worker_receive_time: Optional[float] = None
     worker_return_time: Optional[float] = None
     frontend_return_time: Optional[float] = None
     client_return_time: Optional[float] = None
 
 
+@dataclasses.dataclass
+class GlobalStats:
+    """Global statistics."""
+
+    backward_bounce_count: int = 0
+
+    forward_bounce_count: int = 0
+
+
 class Actor(abc.ABC):
     """An actor machine which can be either client or server."""
 
-    def __init__(self, env: simpy.Environment, name: str):
+    def __init__(self, env: simpy.Environment, name: str, stats: GlobalStats):
         self.env = env
         self.name = name
+        self.stats = stats
 
         # A pool of messages to be processed.
         self.message_pool = simpy.Store(env)

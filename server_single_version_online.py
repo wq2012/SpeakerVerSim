@@ -6,7 +6,8 @@ import random
 from typing import Generator
 
 from common import (Message, BaseClient, BaseFrontend,
-                    BaseWorker, NetworkSystem, Database)
+                    BaseWorker, NetworkSystem, Database,
+                    GlobalStats)
 
 # How may cloud workers do we have in total.
 NUM_CLOUD_WORKERS = 10
@@ -93,6 +94,10 @@ class Frontend(BaseFrontend):
 
         # Part 2: Re-enroll if necessary.
         if worker.version != msg.profile_version:
+            if worker.version < msg.profile_version:
+                self.stats.backward_bounce_count += 1
+            else:
+                self.stats.forward_bounce_count += 1
             msg.is_enroll = True
 
         # Part 3: Send request to worker.
@@ -168,10 +173,12 @@ class CloudWorker(BaseWorker):
 
 def main():
     env = simpy.Environment()
-    client = Client(env, "client")
-    frontend = Frontend(env, "frontend")
+    stats = GlobalStats()
+    client = Client(env, "client", stats)
+    frontend = Frontend(env, "frontend", stats)
     workers = [
-        CloudWorker(env, f"worker-{i}") for i in range(NUM_CLOUD_WORKERS)]
+        CloudWorker(env, f"worker-{i}", stats)
+        for i in range(NUM_CLOUD_WORKERS)]
     database = Database({0: 1})
     netsys = NetworkSystem(
         env,
@@ -180,12 +187,15 @@ def main():
         workers,
         database)
 
-    env.run(until=20)
+    env.run(until=2000)
 
     print("========================================")
     print("Final messages:")
     for msg in netsys.client.final_messages:
         print(msg)
+    print("========================================")
+    print("Global stats:")
+    print(stats)
 
 
 if __name__ == "__main__":
