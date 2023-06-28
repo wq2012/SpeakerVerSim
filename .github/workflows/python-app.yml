@@ -38,3 +38,7 @@ jobs:
       run: |
         pip install pytype
         pytype .
+    - name: pytest
+      run: |
+        pip install pytype
+        pytest .

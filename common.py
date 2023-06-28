@@ -2,11 +2,9 @@
 """Common components."""
 import copy
 import simpy
-from typing import Sequence, Optional, Generator
+from typing import Optional, Generator, Any
 import dataclasses
 import abc
-
-import configs
 
 
 @dataclasses.dataclass
@@ -67,9 +65,15 @@ class GlobalStats:
 class Actor(abc.ABC):
     """An actor machine which can be either client or server."""
 
-    def __init__(self, env: simpy.Environment, name: str, stats: GlobalStats):
+    def __init__(
+            self,
+            env: simpy.Environment,
+            name: str,
+            config: dict[str, Any],
+            stats: GlobalStats):
         self.env = env
         self.name = name
+        self.config = config
         self.stats = stats
 
         # A pool of messages to be processed.
@@ -93,7 +97,7 @@ class BaseClient(Actor):
         print(f"{self.name} send request at time {self.env.now}")
         msg.client_send_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(configs.CLIENT_FRONTEND_LATENCY)
+        yield self.env.timeout(self.config["client_frontend_latency"])
         self.frontend.message_pool.put(msg)
 
 
@@ -104,7 +108,7 @@ class BaseFrontend(Actor):
     def set_client(self, client: Actor) -> None:
         self.client = client
 
-    def set_workers(self, workers: Sequence[Actor]) -> None:
+    def set_workers(self, workers: list[Actor]) -> None:
         self.workers = workers
 
     def set_database(self, database: object) -> None:
@@ -118,7 +122,7 @@ class BaseFrontend(Actor):
         else:
             msg.frontend_send_worker_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(configs.FRONTEND_WORKER_LATENCY)
+        yield self.env.timeout(self.config["frontend_worker_latency"])
         worker.message_pool.put(msg)
 
     def send_to_client(self, msg: Message) -> Generator:
@@ -126,7 +130,7 @@ class BaseFrontend(Actor):
         print(f"{self.name} send response at time {self.env.now}")
         msg.frontend_return_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(configs.CLIENT_FRONTEND_LATENCY)
+        yield self.env.timeout(self.config["client_frontend_latency"])
         self.client.message_pool.put(msg)
 
 
@@ -145,15 +149,15 @@ class BaseWorker(Actor):
         print(f"{self.name} send response at time {self.env.now}")
         msg.worker_return_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(configs.FRONTEND_WORKER_LATENCY)
+        yield self.env.timeout(self.config["frontend_worker_latency"])
         self.frontend.message_pool.put(msg)
 
     def run_inference(self, msg: Message) -> Generator:
         """Run inference of speech engine. Simulates latency."""
         print(f"{self.name} run inference at time {self.env.now}")
         # Simulate computation latency.
-        yield self.env.timeout(configs.WORKER_INFERENCE_LATENCY)
-        msg.total_flops += configs.FLOPS_PER_INFERENCE
+        yield self.env.timeout(self.config["worker_inference_latency"])
+        msg.total_flops += self.config["flops_per_inference"]
 
 
 class SingleVersionDatabase(Actor):
@@ -170,7 +174,7 @@ class SingleVersionDatabase(Actor):
     def fetch_profile(self, msg: Message) -> Generator:
         """Fetch profile from database. Simulates latency."""
         msg.fetch_database_time = self.env.now
-        yield self.env.timeout(configs.DATABASE_IO_LATENCY)
+        yield self.env.timeout(self.config["database_io_latency"])
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
 
@@ -179,7 +183,7 @@ class SingleVersionDatabase(Actor):
     def update_profile(self, msg: Message) -> Generator:
         """Update profile in database. Simulates latency."""
         msg.udpate_database_time = self.env.now
-        yield self.env.timeout(configs.DATABASE_IO_LATENCY)
+        yield self.env.timeout(self.config["database_io_latency"])
         self.data[msg.user_id] = msg.profile_version
 
 
@@ -191,7 +195,7 @@ class NetworkSystem:
             env: simpy.Environment,
             client: BaseClient,
             frontend: BaseFrontend,
-            workers: Sequence[BaseWorker],
+            workers: list[BaseWorker],
             database: object):
         self.env = env
 

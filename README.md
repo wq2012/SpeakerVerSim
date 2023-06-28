@@ -14,3 +14,8 @@ Cite the paper as:
   year={2020}
 }
 ```
+
+Scripts:
+
+* `server_single_simple.py`: Basic server-side single version online updating strategy.
+* `server_single_sync.py`: Server-side single version online updating strategy with frontend-worker version sync.

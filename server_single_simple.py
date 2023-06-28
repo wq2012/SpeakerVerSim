@@ -1,9 +1,10 @@
-"""Server-side single version online strategy."""
+"""Basic server-side single version online strategy."""
 import simpy
 import random
+import yaml
 from typing import Generator
+import sys
 
-import configs
 from common import (Message, BaseClient, BaseFrontend,
                     BaseWorker, NetworkSystem, SingleVersionDatabase,
                     GlobalStats, print_results)
@@ -20,7 +21,7 @@ class SimpleClient(BaseClient):
         """Keep sending requests to frontend with intervals."""
         while True:
             self.env.process(self.send_one_frontend_request())
-            yield self.env.timeout(configs.CLIENT_REQUEST_INTERVAL)
+            yield self.env.timeout(self.config["client_request_interval"])
 
     def send_one_frontend_request(self) -> Generator:
         """Send one request to frontend."""
@@ -137,21 +138,26 @@ class SimpleCloudWorker(BaseWorker):
 
     def update_version(self) -> Generator:
         """Update the model to a new version."""
-        update_time = random.expovariate(1.0 / configs.WORKER_UPDATE_MEAN_TIME)
+        update_time = random.expovariate(
+            1.0 / self.config["worker_update_mean_time"])
         yield self.env.timeout(update_time)
         self.version += 1
         print(f"{self.name} update model version")
 
 
-def main():
+def main(config_file: str = "example_config.yaml") -> GlobalStats:
+
+    with open(config_file, "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+
     env = simpy.Environment()
     stats = GlobalStats()
-    client = SimpleClient(env, "client", stats)
-    frontend = SimpleFrontend(env, "frontend", stats)
+    client = SimpleClient(env, "client", config, stats)
+    frontend = SimpleFrontend(env, "frontend", config, stats)
     workers = [
-        SimpleCloudWorker(env, f"worker-{i}", stats)
-        for i in range(configs.NUM_CLOUD_WORKERS)]
-    database = SingleVersionDatabase(env, "database", stats)
+        SimpleCloudWorker(env, f"worker-{i}", config, stats)
+        for i in range(config["num_cloud_workers"])]
+    database = SingleVersionDatabase(env, "database", config, stats)
     database.create({0: 1})
     netsys = NetworkSystem(
         env,
@@ -160,9 +166,17 @@ def main():
         workers,
         database)
 
-    env.run(until=10000)
+    env.run(until=config["time_to_run"])
     print_results(netsys)
+    return netsys.client.stats
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 1:
+        config_file = "example_config.yaml"
+    elif len(sys.argv) == 2:
+        config_file = len(sys.argv[1])
+    else:
+        raise ValueError("Expecting at most one config file.")
+
+    main(config_file)

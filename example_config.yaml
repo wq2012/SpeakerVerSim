@@ -1,25 +1,26 @@
-"""Configurations for running experiments."""
-
 # How may cloud workers do we have in total.
-NUM_CLOUD_WORKERS = 10
+num_cloud_workers: 10
+
+# How long do we run the simulation.
+time_to_run: 1000
 
 # Latency between client and frontend server.
-CLIENT_FRONTEND_LATENCY = 0.1
+client_frontend_latency: 0.1
 
 # Latency between frontend server and cloud worker.
-FRONTEND_WORKER_LATENCY = 0.002
+frontend_worker_latency: 0.002
 
 # Latency for database IO.
-DATABASE_IO_LATENCY = 0.005
+database_io_latency: 0.005
 
 # Latency to run speech inference engine.
-WORKER_INFERENCE_LATENCY = 0.5
+worker_inference_latency: 0.5
 
 # Flops cost to run one inference.
-FLOPS_PER_INFERENCE = 1000000
+flops_per_inference: 1000000
 
 # How often do we send requests.
-CLIENT_REQUEST_INTERVAL = 10
+client_request_interval: 10
 
 # Mean time of a model version update for each worker.
-WORKER_UPDATE_MEAN_TIME = 3600
+worker_update_mean_time: 3600
