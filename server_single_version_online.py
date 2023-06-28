@@ -7,7 +7,7 @@ from typing import Generator
 
 from common import (Message, BaseClient, BaseFrontend,
                     BaseWorker, NetworkSystem, Database,
-                    GlobalStats)
+                    GlobalStats, print_results)
 
 # How may cloud workers do we have in total.
 NUM_CLOUD_WORKERS = 10
@@ -61,7 +61,7 @@ class Client(BaseClient):
             msg = yield self.message_pool.get()
             print(f"{self.name} receive response at time {self.env.now}")
             msg.client_return_time = self.env.now
-            self.final_messages.append(msg)
+            self.stats.final_messages.append(msg)
 
 
 class Frontend(BaseFrontend):
@@ -102,7 +102,7 @@ class Frontend(BaseFrontend):
 
         # Part 3: Send request to worker.
         print(f"{self.name} send request at time {self.env.now}")
-        msg.frontend_send_time = self.env.now
+        msg.frontend_send_worker_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(FRONTEND_WORKER_LATENCY)
         worker.message_pool.put(msg)
@@ -118,7 +118,7 @@ class Frontend(BaseFrontend):
 
         # Part 2: Re-send request to worker.
         print(f"{self.name} send request at time {self.env.now}")
-        msg.frontend_send_time = self.env.now
+        msg.frontend_resend_worker_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(FRONTEND_WORKER_LATENCY)
         worker.message_pool.put(msg)
@@ -187,15 +187,8 @@ def main():
         workers,
         database)
 
-    env.run(until=2000)
-
-    print("========================================")
-    print("Final messages:")
-    for msg in netsys.client.final_messages:
-        print(msg)
-    print("========================================")
-    print("Global stats:")
-    print(stats)
+    env.run(until=2)
+    print_results(netsys)
 
 
 if __name__ == "__main__":

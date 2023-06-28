@@ -32,6 +32,7 @@ class Message:
     client_send_time: Optional[float] = None
     fetch_database_time: Optional[float] = None
     frontend_send_worker_time: Optional[float] = None
+    frontend_resend_worker_time: Optional[float] = None
     database_udpate_time: Optional[float] = None
     worker_receive_time: Optional[float] = None
     worker_return_time: Optional[float] = None
@@ -47,6 +48,9 @@ class GlobalStats:
 
     forward_bounce_count: int = 0
 
+    # Final messages for logging.
+    final_messages: list[Message] = dataclasses.field(default_factory=list)
+
 
 class Actor(abc.ABC):
     """An actor machine which can be either client or server."""
@@ -58,9 +62,6 @@ class Actor(abc.ABC):
 
         # A pool of messages to be processed.
         self.message_pool = simpy.Store(env)
-
-        # Final messages for logging.
-        self.final_messages = []
 
     @abc.abstractmethod
     def run() -> None:
@@ -150,3 +151,9 @@ class NetworkSystem:
         env.process(self.frontend.run())
         for worker in self.workers:
             env.process(worker.run())
+
+
+def print_results(netsys: NetworkSystem) -> None:
+    print("========================================")
+    print("Global stats:")
+    print(netsys.client.stats)
