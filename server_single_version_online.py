@@ -3,7 +3,6 @@
 TODOs:
 1. Add model update.
 2. Add enrollment.
-3. Add database.
 """
 
 import simpy
@@ -11,7 +10,7 @@ import random
 from typing import Generator
 
 from common import (Message, BaseClient, BaseFrontend,
-                    BaseWorker, NetworkSystem)
+                    BaseWorker, NetworkSystem, Database)
 
 # How may cloud workers do we have in total.
 NUM_CLOUD_WORKERS = 10
@@ -21,6 +20,9 @@ CLIENT_FRONTEND_LATENCY = 0.1
 
 # Latency between frontend server and cloud worker.
 FRONTEND_WORKER_LATENCY = 0.002
+
+# Latency for database IO.
+DATABASE_IO_LATENCY = 0.005
 
 # Latency to run speech inference engine.
 WORKER_INFERENCE_LATENCY = 0.5
@@ -76,7 +78,14 @@ class Frontend(BaseFrontend):
 
     def send_worker_request(self, worker: BaseWorker, msg: Message
                             ) -> Generator:
-        """Send request to worker."""
+        """Fetch profile from database and send request to worker."""
+        # Part 1: Fetch database.
+        print(f"{self.name} fetch database at time {self.env.now}")
+        msg.frontend_fetch_database_time = self.env.now
+        yield self.env.timeout(DATABASE_IO_LATENCY)
+        self.database.fetch_profile(msg)
+
+        # Part 2: Send request to worker.
         print(f"{self.name} send request at time {self.env.now}")
         msg.frontend_send_time = self.env.now
         # Simulate network latency.
@@ -103,7 +112,7 @@ class CloudWorker(BaseWorker):
     def handle_request(self, msg: Message) -> Generator:
         """Handle a request and convert it to reponse."""
         print(f"{self.name} handle request at time {self.env.now}")
-        msg.worker_send_time = self.env.now
+        msg.worker_receive_time = self.env.now
         msg.worker_name = self.name
 
         # Simulate computation latency.
@@ -125,11 +134,13 @@ def main():
     frontend = Frontend(env, "frontend")
     workers = [
         CloudWorker(env, f"worker-{i}") for i in range(NUM_CLOUD_WORKERS)]
+    database = Database({0: 1})
     netsys = NetworkSystem(
         env,
         client,
         frontend,
-        workers)
+        workers,
+        database)
 
     env.run(until=20)
 

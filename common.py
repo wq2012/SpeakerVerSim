@@ -13,6 +13,9 @@ class Message:
     # Unique ID of the user.
     user_id: int = 0
 
+    # Unique ID of the version of the profile.
+    profile_version_id: int = 0
+
     # Whether this is a request or response.
     is_request: bool = True
 
@@ -27,8 +30,9 @@ class Message:
 
     # Timing information.
     client_send_time: Optional[float] = None
-    frontend_send_time: Optional[float] = None
-    worker_send_time: Optional[float] = None
+    frontend_fetch_database_time: Optional[float] = None
+    frontend_send_worker_time: Optional[float] = None
+    worker_receive_time: Optional[float] = None
     worker_return_time: Optional[float] = None
     frontend_return_time: Optional[float] = None
     client_return_time: Optional[float] = None
@@ -68,12 +72,31 @@ class BaseFrontend(Actor):
     def set_workers(self, workers: Sequence[Actor]) -> None:
         self.workers = workers
 
+    def set_database(self, database: object) -> None:
+        self.database = database
+
 
 class BaseWorker(Actor):
     """Base class for a cloud worker."""
 
     def set_frontend(self, frontend: Actor) -> None:
         self.frontend = frontend
+
+
+class Database:
+
+    def __init__(self, data: dict[int, int] = {}):
+        # A mapping from user_id to version_id.
+        self.data = data
+
+    def fetch_profile(self, msg: Message) -> int:
+        if msg.user_id not in self.data:
+            raise ValueError(f"Missing profile for user {msg.user_id}")
+
+        return self.data[msg.user_id]
+
+    def update_profile(self, msg: Message, profile_version_id: int) -> None:
+        self.data[msg.user_id] = profile_version_id
 
 
 class NetworkSystem:
@@ -84,18 +107,21 @@ class NetworkSystem:
             env: simpy.Environment,
             client: BaseClient,
             frontend: BaseFrontend,
-            workers: Sequence[BaseWorker]):
+            workers: Sequence[BaseWorker],
+            database: object):
         self.env = env
 
         # Set actors.
         self.client = client
         self.frontend = frontend
         self.workers = workers
+        self.database = database
 
         # Build connections.
         self.client.set_frontend(self.frontend)
         self.frontend.set_client(self.client)
         self.frontend.set_workers(self.workers)
+        self.frontend.set_database(self.database)
         for worker in self.workers:
             worker.set_frontend(self.frontend)
 
