@@ -14,7 +14,7 @@ class Message:
     user_id: int = 0
 
     # Unique ID of the version of the profile.
-    profile_version_id: int = 0
+    profile_version: Optional[int] = None
 
     # Whether this is a request or response.
     is_request: bool = True
@@ -82,6 +82,9 @@ class BaseWorker(Actor):
     def set_frontend(self, frontend: Actor) -> None:
         self.frontend = frontend
 
+    def set_model_version(self, version: int) -> None:
+        self.version = version
+
 
 class Database:
 
@@ -89,14 +92,14 @@ class Database:
         # A mapping from user_id to version_id.
         self.data = data
 
-    def fetch_profile(self, msg: Message) -> int:
-        if msg.user_id not in self.data:
-            raise ValueError(f"Missing profile for user {msg.user_id}")
+    def fetch_profile(self, user_id: int) -> int:
+        if user_id not in self.data:
+            raise ValueError(f"Missing profile for user {user_id}")
 
-        return self.data[msg.user_id]
+        return self.data[user_id]
 
-    def update_profile(self, msg: Message, profile_version_id: int) -> None:
-        self.data[msg.user_id] = profile_version_id
+    def update_profile(self, user_id: int, profile_version: int) -> None:
+        self.data[user_id] = profile_version
 
 
 class NetworkSystem:
@@ -115,7 +118,13 @@ class NetworkSystem:
         self.client = client
         self.frontend = frontend
         self.workers = workers
+
+        # Set database.
         self.database = database
+
+        # Set worker model version.
+        for worker in self.workers:
+            worker.set_model_version(1)
 
         # Build connections.
         self.client.set_frontend(self.frontend)
