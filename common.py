@@ -1,5 +1,6 @@
 
 """Common components."""
+import copy
 import simpy
 from typing import Sequence, Optional, Generator
 import dataclasses
@@ -16,6 +17,7 @@ class Message:
     user_id: int = 0
 
     # Unique ID of the version of the profile.
+    # Will be updated after fetching profile from database.
     profile_version: Optional[int] = None
 
     # Whether this is a request or response.
@@ -34,8 +36,8 @@ class Message:
     client_send_time: Optional[float] = None
     fetch_database_time: Optional[float] = None
     frontend_send_worker_enroll_time: Optional[float] = None
-    frontend_send_worker_time: Optional[float] = None
     udpate_database_time: Optional[float] = None
+    frontend_send_worker_time: Optional[float] = None
     worker_receive_time: Optional[float] = None
     worker_return_time: Optional[float] = None
     frontend_return_time: Optional[float] = None
@@ -87,7 +89,8 @@ class BaseClient(Actor):
         self.frontend = frontend
 
     def send_to_frontend(self, msg: Message) -> Generator:
-        """Send a message to frontend."""
+        """Send a message to frontend. Simulates latency."""
+        print(f"{self.name} send request at time {self.env.now}")
         msg.client_send_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(configs.CLIENT_FRONTEND_LATENCY)
@@ -108,7 +111,7 @@ class BaseFrontend(Actor):
         self.database = database
 
     def send_to_worker(self, worker: Actor, msg: Message) -> Generator:
-        """Send a message to worker."""
+        """Send a message to worker. Simulates latency."""
         print(f"{self.name} send request at time {self.env.now}")
         if msg.is_enroll:
             msg.frontend_send_worker_enroll_time = self.env.now
@@ -119,8 +122,8 @@ class BaseFrontend(Actor):
         worker.message_pool.put(msg)
 
     def send_to_client(self, msg: Message) -> Generator:
-        """Send a message to client."""
-        print(f"{self.name} receive response at time {self.env.now}")
+        """Send a message to client. Simulates latency."""
+        print(f"{self.name} send response at time {self.env.now}")
         msg.frontend_return_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(configs.CLIENT_FRONTEND_LATENCY)
@@ -138,14 +141,16 @@ class BaseWorker(Actor):
         self.version = version
 
     def send_to_frontend(self, msg: Message) -> Generator:
-        """Send a message to frontend."""
+        """Send a message to frontend. Simulates latency."""
+        print(f"{self.name} send response at time {self.env.now}")
         msg.worker_return_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(configs.FRONTEND_WORKER_LATENCY)
         self.frontend.message_pool.put(msg)
 
     def run_inference(self, msg: Message) -> Generator:
-        """Run inference of speech engine."""
+        """Run inference of speech engine. Simulates latency."""
+        print(f"{self.name} run inference at time {self.env.now}")
         # Simulate computation latency.
         yield self.env.timeout(configs.WORKER_INFERENCE_LATENCY)
         msg.total_flops += configs.FLOPS_PER_INFERENCE
@@ -163,7 +168,8 @@ class SingleVersionDatabase(Actor):
         self.data = data
 
     def fetch_profile(self, msg: Message) -> Generator:
-        """Fetch profile from database."""
+        """Fetch profile from database. Simulates latency."""
+        msg.fetch_database_time = self.env.now
         yield self.env.timeout(configs.DATABASE_IO_LATENCY)
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
@@ -171,7 +177,8 @@ class SingleVersionDatabase(Actor):
         msg.profile_version = self.data[msg.user_id]
 
     def update_profile(self, msg: Message) -> Generator:
-        """Update profile in database."""
+        """Update profile in database. Simulates latency."""
+        msg.udpate_database_time = self.env.now
         yield self.env.timeout(configs.DATABASE_IO_LATENCY)
         self.data[msg.user_id] = msg.profile_version
 
@@ -228,4 +235,6 @@ def print_results(netsys: NetworkSystem) -> None:
 
     print("========================================")
     print("Global stats:")
-    print(stats)
+    stats_no_message = copy.deepcopy(stats)
+    stats_no_message.final_messages = None
+    print(stats_no_message)

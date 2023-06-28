@@ -1,6 +1,4 @@
-"""Server-side single version online strategy.
-"""
-
+"""Server-side single version online strategy."""
 import simpy
 import random
 from typing import Generator
@@ -26,7 +24,6 @@ class SimpleClient(BaseClient):
 
     def send_one_frontend_request(self) -> Generator:
         """Send one request to frontend."""
-        print(f"{self.name} send request at time {self.env.now}")
         msg = Message(
             user_id=0,
             is_request=True,
@@ -43,7 +40,8 @@ class SimpleClient(BaseClient):
             self.stats.final_messages.append(msg)
 
 
-class Frontend(BaseFrontend):
+class SimpleFrontend(BaseFrontend):
+    """A basic frontend."""
 
     def setup(self) -> None:
         self.env.process(self.handle_messages())
@@ -57,7 +55,10 @@ class Frontend(BaseFrontend):
                 self.env.process(self.send_worker_request(worker, msg))
             elif msg.is_enroll:
                 # Enrollment response.
+                # We need to send it again to a random worker.
+                # First, mark it as a non-enrollment request.
                 msg.is_enroll = False
+                msg.is_request = True
                 worker = random.choice(self.workers)
                 self.env.process(self.resend_worker_request(worker, msg))
             else:
@@ -70,7 +71,6 @@ class Frontend(BaseFrontend):
         # Part 1: Fetch database.
         if msg.profile_version is None:
             print(f"{self.name} fetch database at time {self.env.now}")
-            msg.fetch_database_time = self.env.now
             yield from self.database.fetch_profile(msg)
 
         # Part 2: Re-enroll if necessary.
@@ -79,6 +79,7 @@ class Frontend(BaseFrontend):
                 self.stats.backward_bounce_count += 1
             else:
                 self.stats.forward_bounce_count += 1
+            # Mark the request as an enrollment request.
             msg.is_enroll = True
 
         # Part 3: Send request to worker.
@@ -87,9 +88,8 @@ class Frontend(BaseFrontend):
     def resend_worker_request(self, worker: BaseWorker, msg: Message
                               ) -> Generator:
         """After re-enroll, send worker request again."""
-        # Part 1: Update database.
+        # Part 1: Update database with re-enrolled profile.
         print(f"{self.name} update database at time {self.env.now}")
-        msg.udpate_database_time = self.env.now
         yield from self.database.update_profile(msg)
 
         # Part 2: Re-send request to worker.
@@ -100,7 +100,8 @@ class Frontend(BaseFrontend):
         yield from self.send_to_client(msg)
 
 
-class CloudWorker(BaseWorker):
+class SimpleCloudWorker(BaseWorker):
+    """A basic cloud worker."""
 
     def setup(self) -> None:
         self.env.process(self.update_version())
@@ -112,6 +113,9 @@ class CloudWorker(BaseWorker):
             msg = yield self.message_pool.get()
             if msg.is_request:
                 self.env.process(self.handle_one_request(msg))
+            else:
+                print(msg)
+                raise ValueError("Not expecting responses to worker.")
 
     def handle_one_request(self, msg: Message) -> Generator:
         """Handle a single request and convert it to a reponse."""
@@ -119,12 +123,12 @@ class CloudWorker(BaseWorker):
         msg.worker_receive_time = self.env.now
         msg.worker_name = self.name
 
-        # If enrollment request, update profile_version.
+        # If this is enrollment request, update profile_version.
         if msg.is_enroll:
             msg.profile_version = self.version
 
         # Run inference.
-        self.run_inference(msg)
+        yield from self.run_inference(msg)
         print(f"{self.name} complete request at time {self.env.now}")
 
         # Send response back to frontend.
@@ -135,7 +139,7 @@ class CloudWorker(BaseWorker):
         """Update the model to a new version."""
         update_time = random.expovariate(1.0 / configs.WORKER_UPDATE_MEAN_TIME)
         yield self.env.timeout(update_time)
-        self.version = 2
+        self.version += 1
         print(f"{self.name} update model version")
 
 
@@ -143,9 +147,9 @@ def main():
     env = simpy.Environment()
     stats = GlobalStats()
     client = SimpleClient(env, "client", stats)
-    frontend = Frontend(env, "frontend", stats)
+    frontend = SimpleFrontend(env, "frontend", stats)
     workers = [
-        CloudWorker(env, f"worker-{i}", stats)
+        SimpleCloudWorker(env, f"worker-{i}", stats)
         for i in range(configs.NUM_CLOUD_WORKERS)]
     database = SingleVersionDatabase(env, "database", stats)
     database.create({0: 1})
@@ -156,7 +160,7 @@ def main():
         workers,
         database)
 
-    env.run(until=2)
+    env.run(until=10000)
     print_results(netsys)
 
 
