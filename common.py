@@ -1,3 +1,5 @@
+
+"""Common components."""
 import simpy
 from typing import Sequence, Optional
 import dataclasses

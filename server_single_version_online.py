@@ -1,5 +1,12 @@
-import simpy
+"""Server-side single version online strategy.
 
+TODOs:
+1. Add model update.
+2. Add enrollment.
+3. Add database.
+"""
+
+import simpy
 import random
 from typing import Generator
 
@@ -125,6 +132,9 @@ def main():
         workers)
 
     env.run(until=20)
+
+    print("========================================")
+    print("Final messages:")
     for msg in netsys.client.final_messages:
         print(msg)
 
