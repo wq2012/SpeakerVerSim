@@ -78,6 +78,10 @@ class SimpleFrontend(BaseFrontend):
         if msg.profile_version is None:
             print(f"{self.name} fetch database at time {self.env.now}")
             yield from self.database.fetch_profile(msg)
+            if msg.profile_version is None:
+                raise ValueError("fetch_profile failed.")
+        else:
+            raise ValueError("Frontend profile_version must be None.")
 
         # Part 2: Re-enroll if necessary.
         worker = self.select_worker(msg)

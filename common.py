@@ -19,6 +19,7 @@ class Message:
     profile_version: Optional[int] = None
 
     # Similar to profile_version, but contains multiple versions.
+    # TODO: Consider using Union.
     profile_versions: list[int] = dataclasses.field(default_factory=list)
 
     # Whether this is a request or response.
@@ -205,6 +206,10 @@ class SingleVersionDatabase(BaseDatabase):
 
     def fetch_profile(self, msg: Message) -> Generator:
         """Fetch profile from database. Simulates latency."""
+        if not msg.is_request:
+            raise ValueError("Must fetch profile with a request.")
+        if msg.is_enroll:
+            raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
         yield self.env.timeout(self.config["database_io_latency"])
         if msg.user_id not in self.data:
@@ -214,6 +219,10 @@ class SingleVersionDatabase(BaseDatabase):
 
     def update_profile(self, msg: Message) -> Generator:
         """Update profile in database. Simulates latency."""
+        if not msg.is_request:
+            raise ValueError("Must update profile with a request.")
+        if msg.is_enroll:
+            raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
         yield self.env.timeout(self.config["database_io_latency"])
         self.data[msg.user_id] = msg.profile_version
@@ -232,6 +241,10 @@ class MultiVersionDatabase(BaseDatabase):
 
     def fetch_profile(self, msg: Message) -> Generator:
         """Fetch profiles from database. Simulates latency."""
+        if not msg.is_request:
+            raise ValueError("Must fetch profile with a request.")
+        if msg.is_enroll:
+            raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
         yield self.env.timeout(self.config["database_io_latency"])
         if msg.user_id not in self.data:
@@ -241,6 +254,10 @@ class MultiVersionDatabase(BaseDatabase):
 
     def update_profile(self, msg: Message) -> Generator:
         """Update profiles in database. Simulates latency."""
+        if not msg.is_request:
+            raise ValueError("Must update profile with a request.")
+        if msg.is_enroll:
+            raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
         yield self.env.timeout(self.config["database_io_latency"])
         if msg.profile_version is not None:
