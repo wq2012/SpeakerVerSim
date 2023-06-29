@@ -18,6 +18,9 @@ class Message:
     # Will be updated after fetching profile from database.
     profile_version: Optional[int] = None
 
+    # Similar to profile_version, but contains multiple versions.
+    profile_versions: list[int] = dataclasses.field(default_factory=list)
+
     # Whether this is a request or response.
     is_request: bool = True
 
@@ -93,6 +96,19 @@ class Actor(abc.ABC):
         pass
 
 
+class BaseDatabase(Actor):
+    """Base class for a database."""
+    data: dict[int, Any]
+
+    @abc.abstractmethod
+    def fetch_profile(self, msg: Message) -> Generator:
+        pass
+
+    @abc.abstractmethod
+    def update_profile(self, msg: Message) -> Generator:
+        pass
+
+
 class BaseClient(Actor):
     """Base class for a client."""
     frontend: "BaseFrontend"
@@ -119,7 +135,7 @@ class BaseFrontend(Actor):
     def set_workers(self, workers: list["BaseWorker"]) -> None:
         self.workers = workers
 
-    def set_database(self, database: "SingleVersionDatabase") -> None:
+    def set_database(self, database: BaseDatabase) -> None:
         self.database = database
 
     def send_to_worker(self, worker: Actor, msg: Message) -> Generator:
@@ -145,6 +161,7 @@ class BaseFrontend(Actor):
 class BaseWorker(Actor):
     """Base class for a cloud worker."""
     frontend: BaseFrontend
+    # TODO: add multi-version worker
     version: int
 
     def set_frontend(self, frontend: BaseFrontend) -> None:
@@ -175,7 +192,7 @@ class BaseWorker(Actor):
             (self.env.now, self.config["flops_per_inference"]))
 
 
-class SingleVersionDatabase(Actor):
+class SingleVersionDatabase(BaseDatabase):
     """Database storing a single version of profile for each user."""
 
     def setup(self):
@@ -183,7 +200,7 @@ class SingleVersionDatabase(Actor):
         pass
 
     def create(self, data: dict[int, int] = {}):
-        """Create a mapping from user_id to version_id."""
+        """Create a mapping from user_id to version_id(s)."""
         self.data = data
 
     def fetch_profile(self, msg: Message) -> Generator:
@@ -202,6 +219,43 @@ class SingleVersionDatabase(Actor):
         self.data[msg.user_id] = msg.profile_version
 
 
+class MultiVersionDatabase(BaseDatabase):
+    """Database storing multiple versions of profile for each user."""
+
+    def setup(self):
+        """No processes."""
+        pass
+
+    def create(self, data: dict[int, list[int]] = {}):
+        """Create a mapping from user_id to version_id(s)."""
+        self.data = data
+
+    def fetch_profile(self, msg: Message) -> Generator:
+        """Fetch profiles from database. Simulates latency."""
+        msg.fetch_database_time = self.env.now
+        yield self.env.timeout(self.config["database_io_latency"])
+        if msg.user_id not in self.data:
+            raise ValueError(f"Missing profile for user {msg.user_id}")
+
+        msg.profile_versions = self.data[msg.user_id]
+
+    def update_profile(self, msg: Message) -> Generator:
+        """Update profiles in database. Simulates latency."""
+        msg.udpate_database_time = self.env.now
+        yield self.env.timeout(self.config["database_io_latency"])
+        if msg.profile_version is not None:
+            # From single version worker.
+            if msg.profile_version not in self.data[msg.user_id]:
+                self.data[msg.user_id].append(msg.profile_version)
+        else:
+            # From multi version worker.
+            if len(msg.profile_versions) == 0:
+                raise ValueError("Expecting non-empty profile_versions.")
+            for version in msg.profile_versions:
+                if version not in self.data[msg.user_id]:
+                    self.data[msg.user_id].append(version)
+
+
 class NetworkSystem:
     """Class for the entire network system."""
 
@@ -211,7 +265,7 @@ class NetworkSystem:
             client: BaseClient,
             frontend: BaseFrontend,
             workers: list[BaseWorker],
-            database: SingleVersionDatabase):
+            database: BaseDatabase):
         self.env = env
 
         # Set actors.
