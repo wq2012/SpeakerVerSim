@@ -57,7 +57,6 @@ class ForegroundReenrollFrontend(BaseFrontend):
         while True:
             msg = yield self.message_pool.get()
             if msg.is_request:
-
                 self.env.process(self.send_worker_request(msg))
             elif msg.is_enroll:
                 # Enrollment response.

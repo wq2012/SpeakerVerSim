@@ -1,11 +1,11 @@
 """Basic server-side double version online strategy."""
 import simpy
-# import random
 import yaml
-# from typing import Generator
+from typing import Generator
 import sys
+import copy
 
-from common import (BaseFrontend,
+from common import (Message, BaseFrontend,
                     BaseWorker, NetworkSystem, MultiVersionDatabase,
                     GlobalStats, print_results)
 import server_single_simple
@@ -18,7 +18,53 @@ class BackgroundReenrollFrontend(BaseFrontend):
     """
 
     def setup(self) -> None:
-        pass
+        self.env.process(self.handle_messages())
+
+    def handle_messages(self) -> Generator:
+        while True:
+            msg = yield self.message_pool.get()
+            if msg.is_request:
+                self.env.process(self.send_worker_request(msg))
+            elif msg.is_enroll:
+                # Enrollment response.
+                # Enrollment happens in the background.
+                # Just need to udpate database.
+                # No need to resend request to worker.
+                self.env.process(self.update_database(msg))
+            else:
+                # Send response back to client.
+                self.env.process(self.send_client_response(msg))
+
+    def send_worker_request(self, msg: Message) -> Generator:
+        """Fetch profile from database and send request to worker."""
+        # Part 1: Fetch database.
+        if len(msg.profile_versions) == 0:
+            print(f"{self.name} fetch database at time {self.env.now}")
+            yield from self.database.fetch_profile(msg)
+            if len(msg.profile_versions) == 0:
+                raise ValueError("fetch_profile failed.")
+        else:
+            raise ValueError("Frontend profile_versions must be empty.")
+
+        # Part 2: Send request to worker.
+        worker = self.select_worker(msg)
+        yield from self.send_to_worker(worker, msg)
+
+        # Part 3: Decide whether need to trigger background re-enrollment.
+        if max(worker.version) not in msg.profile_version:
+            enroll_msg = copy.deepcopy(msg)
+            enroll_msg.is_enroll = True
+            self.env.process(self.send_to_worker(worker, enroll_msg))
+
+    def update_database(self, msg: Message) -> Generator:
+        """After background re-enroll, update database."""
+        # Part 1: Update database with re-enrolled profile.
+        print(f"{self.name} update database at time {self.env.now}")
+        yield from self.database.update_profile(msg)
+
+    def send_client_response(self, msg: Message) -> Generator:
+        """Send response back to client."""
+        yield from self.send_to_client(msg)
 
 
 class DoubleVersionWorker(BaseWorker):
