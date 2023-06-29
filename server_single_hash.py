@@ -13,7 +13,7 @@ from common import (Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
 import server_single_simple
 
 
-class UserHashFrontend(server_single_simple.SimpleFrontend):
+class UserHashFrontend(server_single_simple.ForegroundReenrollFrontend):
     """A frontend that selects worker based on user hash."""
 
     def select_worker(self, msg: Message) -> BaseWorker:
@@ -33,7 +33,7 @@ def main(config_file: str = "example_config.yml") -> GlobalStats:
     client = server_single_simple.SimpleClient(env, "client", config, stats)
     frontend = UserHashFrontend(env, "frontend", config, stats)
     workers = [
-        server_single_simple.SimpleCloudWorker(
+        server_single_simple.SingleVersionWorker(
             env, f"worker-{i}", config, stats)
         for i in range(config["num_cloud_workers"])]
     database = SingleVersionDatabase(env, "database", config, stats)

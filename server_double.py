@@ -1,27 +1,31 @@
 """Basic server-side double version online strategy."""
 import simpy
-import random
+# import random
 import yaml
-from typing import Generator
+# from typing import Generator
 import sys
 
-from common import (Message, BaseClient, BaseFrontend,
+from common import (BaseFrontend,
                     BaseWorker, NetworkSystem, MultiVersionDatabase,
                     GlobalStats, print_results)
 import server_single_simple
 
 
-class DoubleVersionFrontend(BaseFrontend):
+class BackgroundReenrollFrontend(BaseFrontend):
     """A frontend for double version strategy.
 
-    Re-enrollment happens as background process.
+    Re-enrollment happens as non-blocking background process.
     """
-    pass
+
+    def setup(self) -> None:
+        pass
 
 
-class DoubleVersionWorker():
+class DoubleVersionWorker(BaseWorker):
     """A backend worker serving two versions of models."""
-    pass
+
+    def setup(self) -> None:
+        pass
 
 
 def main(config_file: str = "example_config.yml") -> GlobalStats:
@@ -32,7 +36,7 @@ def main(config_file: str = "example_config.yml") -> GlobalStats:
     env = simpy.Environment()
     stats = GlobalStats(config=config)
     client = server_single_simple.SimpleClient(env, "client", config, stats)
-    frontend = DoubleVersionFrontend(env, "frontend", config, stats)
+    frontend = BackgroundReenrollFrontend(env, "frontend", config, stats)
     workers = [
         DoubleVersionWorker(env, f"worker-{i}", config, stats)
         for i in range(config["num_cloud_workers"])]

@@ -44,8 +44,11 @@ class SimpleClient(BaseClient):
             self.stats.final_messages.append(msg)
 
 
-class SimpleFrontend(BaseFrontend):
-    """A basic frontend that runs re-enrollment on-the-fly."""
+class ForegroundReenrollFrontend(BaseFrontend):
+    """A basic frontend that runs re-enrollment on-the-fly.
+
+    Re-enrollment is a foreground process that is blocking.
+    """
 
     def setup(self) -> None:
         self.env.process(self.handle_messages())
@@ -111,8 +114,8 @@ class SimpleFrontend(BaseFrontend):
         yield from self.send_to_client(msg)
 
 
-class SimpleCloudWorker(BaseWorker):
-    """A basic cloud worker."""
+class SingleVersionWorker(BaseWorker):
+    """A basic cloud worker serving a single version of model."""
 
     def setup(self) -> None:
         self.env.process(self.update_version())
@@ -163,9 +166,9 @@ def main(config_file: str = "example_config.yml") -> GlobalStats:
     env = simpy.Environment()
     stats = GlobalStats(config=config)
     client = SimpleClient(env, "client", config, stats)
-    frontend = SimpleFrontend(env, "frontend", config, stats)
+    frontend = ForegroundReenrollFrontend(env, "frontend", config, stats)
     workers = [
-        SimpleCloudWorker(env, f"worker-{i}", config, stats)
+        SingleVersionWorker(env, f"worker-{i}", config, stats)
         for i in range(config["num_cloud_workers"])]
     database = SingleVersionDatabase(env, "database", config, stats)
     database.create({0: 1})

@@ -14,7 +14,7 @@ from common import (Message, NetworkSystem, MultiVersionDatabase,
 import server_single_simple
 
 
-class MultiProfileFrontend(server_single_simple.SimpleFrontend):
+class MultiProfileFrontend(server_single_simple.ForegroundReenrollFrontend):
     """A frontend that uses a MultiVersionDatabase."""
 
     def send_worker_request(self, msg: Message) -> Generator:
@@ -62,7 +62,7 @@ def main(config_file: str = "example_config.yml") -> GlobalStats:
     client = server_single_simple.SimpleClient(env, "client", config, stats)
     frontend = MultiProfileFrontend(env, "frontend", config, stats)
     workers = [
-        server_single_simple.SimpleCloudWorker(
+        server_single_simple.SingleVersionWorker(
             env, f"worker-{i}", config, stats)
         for i in range(config["num_cloud_workers"])]
     database = MultiVersionDatabase(env, "database", config, stats)

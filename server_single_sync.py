@@ -30,7 +30,7 @@ class VersionQuery:
     version: Optional[int] = None
 
 
-class VersionSyncFrontend(server_single_simple.SimpleFrontend):
+class VersionSyncFrontend(server_single_simple.ForegroundReenrollFrontend):
     """A frontend that keeps a model version table."""
     worker_version_table: dict
     query_pool: simpy.Store
@@ -92,7 +92,7 @@ class VersionSyncFrontend(server_single_simple.SimpleFrontend):
             self.worker_version_table[query.worker_name] = query.version
 
 
-class VersionSyncWorker(server_single_simple.SimpleCloudWorker):
+class VersionSyncWorker(server_single_simple.SingleVersionWorker):
     """A cloud worker that responds to version queries from frontend."""
     query_pool: simpy.Store
 
