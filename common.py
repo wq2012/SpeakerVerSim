@@ -58,6 +58,14 @@ class GlobalStats:
     # Average flops for fulling one request.
     average_total_flops: float = 0
 
+    # Configuration of the experiment.
+    config: dict[str, Any] = dataclasses.field(default_factory=dict)
+
+    # Workload of the workers, as a mapping from name to
+    # (time, flops) pairs.
+    workload: dict[str, list[tuple[float, float]]
+                   ] = dataclasses.field(default_factory=dict)
+
     # Final messages for logging.
     final_messages: list[Message] = dataclasses.field(default_factory=list)
 
@@ -87,9 +95,9 @@ class Actor(abc.ABC):
 
 class BaseClient(Actor):
     """Base class for a client."""
-    frontend: Actor
+    frontend: "BaseFrontend"
 
-    def set_frontend(self, frontend: Actor) -> None:
+    def set_frontend(self, frontend: "BaseFrontend") -> None:
         self.frontend = frontend
 
     def send_to_frontend(self, msg: Message) -> Generator:
@@ -103,15 +111,15 @@ class BaseClient(Actor):
 
 class BaseFrontend(Actor):
     """Base class for a frontend server."""
-    client: Actor
+    client: BaseClient
 
-    def set_client(self, client: Actor) -> None:
+    def set_client(self, client: BaseClient) -> None:
         self.client = client
 
-    def set_workers(self, workers: list[Actor]) -> None:
+    def set_workers(self, workers: list["BaseWorker"]) -> None:
         self.workers = workers
 
-    def set_database(self, database: object) -> None:
+    def set_database(self, database: "SingleVersionDatabase") -> None:
         self.database = database
 
     def send_to_worker(self, worker: Actor, msg: Message) -> Generator:
@@ -136,9 +144,10 @@ class BaseFrontend(Actor):
 
 class BaseWorker(Actor):
     """Base class for a cloud worker."""
-    frontend: Actor
+    frontend: BaseFrontend
+    version: int
 
-    def set_frontend(self, frontend: Actor) -> None:
+    def set_frontend(self, frontend: BaseFrontend) -> None:
         self.frontend = frontend
 
     def set_model_version(self, version: int) -> None:
@@ -158,6 +167,12 @@ class BaseWorker(Actor):
         # Simulate computation latency.
         yield self.env.timeout(self.config["worker_inference_latency"])
         msg.total_flops += self.config["flops_per_inference"]
+
+        # Add to stats.
+        if self.name not in self.stats.workload:
+            self.stats.workload[self.name] = []
+        self.stats.workload[self.name].append(
+            (self.env.now, self.config["flops_per_inference"]))
 
 
 class SingleVersionDatabase(Actor):
@@ -196,7 +211,7 @@ class NetworkSystem:
             client: BaseClient,
             frontend: BaseFrontend,
             workers: list[BaseWorker],
-            database: object):
+            database: SingleVersionDatabase):
         self.env = env
 
         # Set actors.
@@ -239,6 +254,7 @@ def print_results(netsys: NetworkSystem) -> None:
 
     print("========================================")
     print("Global stats:")
-    stats_no_message = copy.deepcopy(stats)
-    stats_no_message.final_messages = None
-    print(stats_no_message)
+    stats_short = copy.deepcopy(stats)
+    stats_short.final_messages = None
+    stats_short.workload = None
+    print(stats_short)

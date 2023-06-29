@@ -8,12 +8,13 @@ current model version of each cloud computing server。
 import server_single_simple
 
 import simpy
+import sys
+import yaml
 import random
 import dataclasses
 from typing import Generator, Optional
 
-from common import (Message, BaseClient, BaseFrontend,
-                    BaseWorker, NetworkSystem, SingleVersionDatabase,
+from common import (Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
                     GlobalStats, print_results)
 
 
@@ -33,34 +34,128 @@ class VersionQuery:
 
 class VersionSyncFrontend(server_single_simple.SimpleFrontend):
     """A frontend that keeps a model version table."""
+    worker_version_table: dict
+    query_pool: simpy.Store
 
     def setup(self) -> None:
+        super().setup()
+        # Create a table recording each worker's model version.
         self.worker_version_table = dict()
-        self.env.process(self.handle_messages())
+        for worker in self.workers:
+            self.worker_version_table[worker.name] = worker.version
+
+        # A pool for version query responses.
+        self.query_pool = simpy.Store(self.env)
+
+        # New processes.
         self.env.process(self.send_version_queries())
         self.env.process(self.handle_version_responses())
 
-    def handle_messages(self) -> Generator:
-        while True:
-            msg = yield self.message_pool.get()
-            if msg.is_request:
-                # Send request to a random worker.
-                worker = random.choice(self.workers)
-                self.env.process(self.send_worker_request(worker, msg))
-            elif msg.is_enroll:
-                # Enrollment response.
-                # We need to send it again to a random worker.
-                # First, mark it as a non-enrollment request.
-                msg.is_enroll = False
-                msg.is_request = True
-                worker = random.choice(self.workers)
-                self.env.process(self.resend_worker_request(worker, msg))
-            else:
-                # Send response back to client.
-                self.env.process(self.send_client_response(msg))
+    def select_worker(self, msg: Message) -> BaseWorker:
+        """Decide which worker to send the request to."""
+        # Avoid backward version bouncing.
+        if msg.profile_version is None:
+            raise ValueError("Message version is unset.")
+        worker = random.choice(self.workers)
+        if self.worker_version_table[worker.name] < msg.profile_version:
+            # Retry to find a worker with newer version.
+            updated_workers = []
+            for worker in self.workers:
+                if (self.worker_version_table[worker.name]
+                        == msg.profile_version):
+                    updated_workers.append(worker)
+            # Note: updated_workers can be empty, if the worker has updated,
+            # but has not sync'ed with frontend yet.
+            if len(updated_workers) > 0:
+                return random.choice(self.workers)
+        return worker
 
     def send_version_queries(self) -> Generator:
-        yield None
+        while True:
+            yield self.env.timeout(self.config["version_query_interval"])
+            for worker in self.workers:
+                self.env.process(self.send_one_version_query(worker))
+
+    def send_one_version_query(self, worker: BaseWorker) -> Generator:
+        query = VersionQuery()
+        # Simulate network latency.
+        yield self.env.timeout(self.config["frontend_worker_latency"])
+        worker.query_pool.put(query)  # pytype: disable=attribute-error
 
     def handle_version_responses(self) -> Generator:
-        yield None
+        while True:
+            query = yield self.query_pool.get()
+            if not query.is_request:
+                self.worker_version_table[query.worker_name] = query.version
+            else:
+                raise ValueError(
+                    "Frontend not expected query requests in its pool.")
+
+
+class VersionSyncWorker(server_single_simple.SimpleCloudWorker):
+    """A cloud worker that respond to version queries from frontend."""
+    query_pool: simpy.Store
+
+    def setup(self) -> None:
+        super().setup()
+
+        # A pool for version query responses.
+        self.query_pool = simpy.Store(self.env)
+
+        # New processes.
+        self.env.process(self.handle_version_queries())
+
+    def handle_version_queries(self) -> Generator:
+        while True:
+            query = yield self.query_pool.get()
+            self.env.process(self.handle_one_query(query))
+
+    def handle_one_query(self, query: VersionQuery) -> Generator:
+        # Update query.
+        if query.is_request:
+            query.is_request = False
+            query.worker_name = self.name
+            query.version = self.version
+        else:
+            raise ValueError("Query received by worker must be request.")
+
+        # Simulate network latency.
+        yield self.env.timeout(self.config["frontend_worker_latency"])
+        self.frontend.query_pool.put(query)  # pytype: disable=attribute-error
+
+
+def main(config_file: str = "example_config.yml") -> GlobalStats:
+
+    with open(config_file, "r") as f:
+        config = yaml.safe_load(f)
+
+    env = simpy.Environment()
+    stats = GlobalStats(config=config)
+    client = server_single_simple.SimpleClient(env, "client", config, stats)
+    frontend = VersionSyncFrontend(env, "frontend", config, stats)
+    workers = [
+        VersionSyncWorker(env, f"worker-{i}", config, stats)
+        for i in range(config["num_cloud_workers"])]
+    database = SingleVersionDatabase(env, "database", config, stats)
+    database.create({0: 1})
+    netsys = NetworkSystem(
+        env,
+        client,
+        frontend,
+        workers,
+        database)
+
+    env.run(until=config["time_to_run"])
+    print_results(netsys)
+    return netsys.client.stats
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        config_file = "example_config.yml"
+    elif len(sys.argv) == 2:
+        config_file = len(sys.argv[1])
+    else:
+        raise ValueError("Expecting at most one config file.")
+
+    main(config_file)

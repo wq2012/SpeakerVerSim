@@ -47,27 +47,29 @@ class SimpleFrontend(BaseFrontend):
     def setup(self) -> None:
         self.env.process(self.handle_messages())
 
+    def select_worker(self, msg: Message) -> BaseWorker:
+        """Decide which worker to send the request to."""
+        # This frontend simply send request to a random worker.
+        return random.choice(self.workers)
+
     def handle_messages(self) -> Generator:
         while True:
             msg = yield self.message_pool.get()
             if msg.is_request:
-                # Send request to a random worker.
-                worker = random.choice(self.workers)
-                self.env.process(self.send_worker_request(worker, msg))
+
+                self.env.process(self.send_worker_request(msg))
             elif msg.is_enroll:
                 # Enrollment response.
                 # We need to send it again to a random worker.
                 # First, mark it as a non-enrollment request.
                 msg.is_enroll = False
                 msg.is_request = True
-                worker = random.choice(self.workers)
-                self.env.process(self.resend_worker_request(worker, msg))
+                self.env.process(self.resend_worker_request(msg))
             else:
                 # Send response back to client.
                 self.env.process(self.send_client_response(msg))
 
-    def send_worker_request(self, worker: BaseWorker, msg: Message
-                            ) -> Generator:
+    def send_worker_request(self, msg: Message) -> Generator:
         """Fetch profile from database and send request to worker."""
         # Part 1: Fetch database.
         if msg.profile_version is None:
@@ -75,6 +77,7 @@ class SimpleFrontend(BaseFrontend):
             yield from self.database.fetch_profile(msg)
 
         # Part 2: Re-enroll if necessary.
+        worker = self.select_worker(msg)
         if worker.version != msg.profile_version:
             if worker.version < msg.profile_version:
                 self.stats.backward_bounce_count += 1
@@ -86,14 +89,14 @@ class SimpleFrontend(BaseFrontend):
         # Part 3: Send request to worker.
         yield from self.send_to_worker(worker, msg)
 
-    def resend_worker_request(self, worker: BaseWorker, msg: Message
-                              ) -> Generator:
+    def resend_worker_request(self, msg: Message) -> Generator:
         """After re-enroll, send worker request again."""
         # Part 1: Update database with re-enrolled profile.
         print(f"{self.name} update database at time {self.env.now}")
         yield from self.database.update_profile(msg)
 
         # Part 2: Re-send request to worker.
+        worker = self.select_worker(msg)
         yield from self.send_to_worker(worker, msg)
 
     def send_client_response(self, msg: Message) -> Generator:
@@ -145,13 +148,13 @@ class SimpleCloudWorker(BaseWorker):
         print(f"{self.name} update model version")
 
 
-def main(config_file: str = "example_config.yaml") -> GlobalStats:
+def main(config_file: str = "example_config.yml") -> GlobalStats:
 
     with open(config_file, "r") as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
+        config = yaml.safe_load(f)
 
     env = simpy.Environment()
-    stats = GlobalStats()
+    stats = GlobalStats(config=config)
     client = SimpleClient(env, "client", config, stats)
     frontend = SimpleFrontend(env, "frontend", config, stats)
     workers = [
@@ -173,7 +176,7 @@ def main(config_file: str = "example_config.yaml") -> GlobalStats:
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        config_file = "example_config.yaml"
+        config_file = "example_config.yml"
     elif len(sys.argv) == 2:
         config_file = len(sys.argv[1])
     else:
