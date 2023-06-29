@@ -17,6 +17,13 @@ class SimpleClient(BaseClient):
         self.env.process(self.send_frontend_requests())
         self.env.process(self.receive_frontend_responses())
 
+    def create_init_request(self) -> Message:
+        return Message(
+            user_id=0,
+            is_request=True,
+            is_enroll=False,
+        )
+
     def send_frontend_requests(self) -> Generator:
         """Keep sending requests to frontend with intervals."""
         while True:
@@ -25,11 +32,7 @@ class SimpleClient(BaseClient):
 
     def send_one_frontend_request(self) -> Generator:
         """Send one request to frontend."""
-        msg = Message(
-            user_id=0,
-            is_request=True,
-            is_enroll=False,
-        )
+        msg = self.create_init_request()
         yield from self.send_to_frontend(msg)
 
     def receive_frontend_responses(self) -> Generator:

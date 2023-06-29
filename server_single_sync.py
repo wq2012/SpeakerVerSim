@@ -2,7 +2,7 @@
 
 The frontend server can periodically send synchronization requests
 to all cloud computing servers, and maintain a table to record the
-current model version of each cloud computing server。
+current model version of each cloud computing server.
 """
 
 import server_single_simple
