@@ -5,6 +5,7 @@ import simpy
 from typing import Optional, Generator, Any
 import dataclasses
 import abc
+import random
 
 
 @dataclasses.dataclass
@@ -129,6 +130,7 @@ class BaseClient(Actor):
 class BaseFrontend(Actor):
     """Base class for a frontend server."""
     client: BaseClient
+    workers: list["BaseWorker"]
 
     def set_client(self, client: BaseClient) -> None:
         self.client = client
@@ -138,6 +140,11 @@ class BaseFrontend(Actor):
 
     def set_database(self, database: BaseDatabase) -> None:
         self.database = database
+
+    def select_worker(self, msg: Message) -> "BaseWorker":
+        """Decide which worker to send the request to."""
+        # By default, simply send request to a random worker.
+        return random.choice(self.workers)
 
     def send_to_worker(self, worker: Actor, msg: Message) -> Generator:
         """Send a message to worker. Simulates latency."""

@@ -53,11 +53,6 @@ class ForegroundReenrollFrontend(BaseFrontend):
     def setup(self) -> None:
         self.env.process(self.handle_messages())
 
-    def select_worker(self, msg: Message) -> BaseWorker:
-        """Decide which worker to send the request to."""
-        # This frontend simply send request to a random worker.
-        return random.choice(self.workers)
-
     def handle_messages(self) -> Generator:
         while True:
             msg = yield self.message_pool.get()
