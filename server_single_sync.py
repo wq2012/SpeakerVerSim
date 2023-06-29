@@ -71,29 +71,31 @@ class VersionSyncFrontend(server_single_simple.SimpleFrontend):
         return worker
 
     def send_version_queries(self) -> Generator:
+        """Send version queries to all workers at intervals."""
         while True:
             yield self.env.timeout(self.config["version_query_interval"])
             for worker in self.workers:
                 self.env.process(self.send_one_version_query(worker))
 
     def send_one_version_query(self, worker: BaseWorker) -> Generator:
+        """Send one query to one worker."""
         query = VersionQuery()
         # Simulate network latency.
         yield self.env.timeout(self.config["frontend_worker_latency"])
         worker.query_pool.put(query)  # pytype: disable=attribute-error
 
     def handle_version_responses(self) -> Generator:
+        """Update table based on responses."""
         while True:
             query = yield self.query_pool.get()
-            if not query.is_request:
-                self.worker_version_table[query.worker_name] = query.version
-            else:
-                raise ValueError(
-                    "Frontend not expected query requests in its pool.")
+            if (query.is_request) or (
+                    query.version is None) or (not query.worker_name):
+                raise ValueError("Invalid query.")
+            self.worker_version_table[query.worker_name] = query.version
 
 
 class VersionSyncWorker(server_single_simple.SimpleCloudWorker):
-    """A cloud worker that respond to version queries from frontend."""
+    """A cloud worker that responds to version queries from frontend."""
     query_pool: simpy.Store
 
     def setup(self) -> None:
@@ -106,11 +108,13 @@ class VersionSyncWorker(server_single_simple.SimpleCloudWorker):
         self.env.process(self.handle_version_queries())
 
     def handle_version_queries(self) -> Generator:
+        """Handle all version queries."""
         while True:
             query = yield self.query_pool.get()
             self.env.process(self.handle_one_query(query))
 
     def handle_one_query(self, query: VersionQuery) -> Generator:
+        """Handle one version query request and create a response."""
         # Update query.
         if query.is_request:
             query.is_request = False
