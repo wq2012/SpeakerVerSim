@@ -45,7 +45,7 @@ class SimpleClient(BaseClient):
 
 
 class SimpleFrontend(BaseFrontend):
-    """A basic frontend."""
+    """A basic frontend that runs re-enrollment on-the-fly."""
 
     def setup(self) -> None:
         self.env.process(self.handle_messages())

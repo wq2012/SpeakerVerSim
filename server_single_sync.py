@@ -4,9 +4,6 @@ The frontend server can periodically send synchronization requests
 to all cloud computing servers, and maintain a table to record the
 current model version of each cloud computing server.
 """
-
-import server_single_simple
-
 import simpy
 import sys
 import yaml
@@ -16,6 +13,7 @@ from typing import Generator, Optional
 
 from common import (Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
                     GlobalStats, print_results)
+import server_single_simple
 
 
 @dataclasses.dataclass

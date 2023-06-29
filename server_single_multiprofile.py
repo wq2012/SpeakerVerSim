@@ -4,10 +4,6 @@ We store multiple versions of profiles for each user in the database.
 Once the re-enrollment for a user has completed, we will store both
 the old version and the new version of this user's profile.
 """
-
-
-import server_single_simple
-
 import simpy
 import sys
 import yaml
@@ -15,6 +11,7 @@ from typing import Generator
 
 from common import (Message, NetworkSystem, MultiVersionDatabase,
                     GlobalStats, print_results)
+import server_single_simple
 
 
 class MultiProfileFrontend(server_single_simple.SimpleFrontend):

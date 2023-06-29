@@ -4,16 +4,13 @@ The frontend server implements a load balancing algorithm based
 on the hash value of the user’s ID, such that requests for each
 user are always dispatched to the same cloud computing server.
 """
-
-
-import server_single_simple
-
 import simpy
 import sys
 import yaml
 
 from common import (Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
                     GlobalStats, print_results)
+import server_single_simple
 
 
 class UserHashFrontend(server_single_simple.SimpleFrontend):
