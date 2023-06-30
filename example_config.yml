@@ -2,28 +2,44 @@
 num_cloud_workers: 10
 
 # How long do we run the simulation.
+# 3 hours.
 time_to_run: 10800
 
 # Latency between client and frontend server.
-client_frontend_latency: 0.1
+# Typical audio length: 5s
+# Typical sample rate: 16kHz
+# Typical sample site: 16 bits
+# Thus typical audio total bits: 5 * 16000 * 16 = 1280000
+# Typical 4G bandwidth: 5Mbps
+# Thus latency: 1280000 / 5M = 0.244 (s)
+client_frontend_latency: 0.244
 
 # Latency between frontend server and cloud worker.
-frontend_worker_latency: 0.002
+# Typical cloud bandwidth: 1Gbps
+# Thus latency: 1280000 / 1G = 0.0012 (s)
+frontend_worker_latency: 0.0012
 
 # Latency for database IO.
+database_read_latency: 0.0005
+database_write_latency: 0.01
 database_io_latency: 0.005
 
 # Latency to run speech inference engine.
+# TODO: update
 worker_inference_latency: 0.5
 
 # Flops cost to run one inference.
+# TODO: update
 flops_per_inference: 1000000
 
 # How often do we send requests.
 client_request_interval: 10
 
 # Mean time of a model version update for each worker.
+# Actual time follows an exponential distribution.
+# Here we use 1 hour.
 worker_update_mean_time: 3600
 
 # How often does frontend send version queries to workers.
+# Here we use 10 min.
 version_query_interval: 600

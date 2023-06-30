@@ -230,7 +230,7 @@ class SingleVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
-        yield self.env.timeout(self.config["database_io_latency"])
+        yield self.env.timeout(self.config["database_read_latency"])
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
 
@@ -243,7 +243,7 @@ class SingleVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
-        yield self.env.timeout(self.config["database_io_latency"])
+        yield self.env.timeout(self.config["database_write_latency"])
         self.data[msg.user_id] = msg.profile_version
 
 
@@ -265,7 +265,7 @@ class MultiVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
-        yield self.env.timeout(self.config["database_io_latency"])
+        yield self.env.timeout(self.config["database_read_latency"])
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
 
@@ -278,7 +278,7 @@ class MultiVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
-        yield self.env.timeout(self.config["database_io_latency"])
+        yield self.env.timeout(self.config["database_write_latency"])
         if msg.profile_version is not None:
             # From single version worker.
             if msg.profile_version not in self.data[msg.user_id]:
