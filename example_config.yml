@@ -34,14 +34,17 @@ worker_inference_latency: 0.5
 
 # Flops cost to run one inference.
 # In Turn-to-Diarize (https://arxiv.org/abs/2109.11641), example
-# speaker recogntion model uses 0.42Gflops to process 1s of audio.
+# speaker recogntion model uses 0.42 Gflops to process 1s of audio.
 # Typical audio length: 5s
-# Thus here we use: 0.42 * 1000000000 * 5 = 
+# Thus here we use: 0.42 * 1000000000 * 5 = 2100000000
 flops_per_inference: 2100000000
 
 # How often do we send requests.
 # Here we use 10 s.
 client_request_interval: 10
+
+# Number of users that send requests.
+num_users: 1
 
 # Mean time of a model version update for each worker.
 # Actual time follows an exponential distribution.
@@ -49,5 +52,6 @@ client_request_interval: 10
 worker_update_mean_time: 3600
 
 # How often does frontend send version queries to workers.
+# Only used by VersionSyncFrontend and VersionSyncWorker.
 # Here we use 10 min.
 version_query_interval: 600

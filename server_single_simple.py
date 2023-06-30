@@ -18,12 +18,26 @@ class SimpleClient(BaseClient):
         self.env.process(self.receive_frontend_responses())
 
     def create_init_request(self) -> Message:
+        """Create the initial request with random msg_id."""
         return Message(
             msg_id=random.randint(0, sys.maxsize),
-            user_id=0,
+            user_id=self.get_user_id(),
             is_request=True,
             is_enroll=False,
         )
+
+    def get_user_id(self) -> int:
+        """Get the user_id of the initial request.
+
+        Total number of users is self.config["num_users"].
+
+        Different users send requests with different frequency.
+        Here we assume each user sends requests twice more frequent than the
+        previous user.
+        """
+        user_ids = list(range(self.config["num_users"]))
+        user_weights = [2**x for x in user_ids]
+        return random.choices(user_ids, weights=user_weights, k=1)[0]
 
     def send_frontend_requests(self) -> Generator:
         """Keep sending requests to frontend with intervals."""
