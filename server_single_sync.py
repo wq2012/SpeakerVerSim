@@ -9,7 +9,7 @@ import sys
 import yaml
 import random
 import dataclasses
-from typing import Generator, Optional
+from typing import Generator, Optional, Any
 
 from common import (Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
                     GlobalStats, print_results)
@@ -126,11 +126,8 @@ class VersionSyncWorker(server_single_simple.SingleVersionWorker):
         self.frontend.query_pool.put(query)  # pytype: disable=attribute-error
 
 
-def main(config_file: str = "example_config.yml") -> GlobalStats:
-
-    with open(config_file, "r") as f:
-        config = yaml.safe_load(f)
-
+def simulate(config: dict[str, Any]) -> GlobalStats:
+    """Run simulation."""
     env = simpy.Environment()
     stats = GlobalStats(config=config)
     client = server_single_simple.SimpleClient(env, "client", config, stats)
@@ -154,10 +151,14 @@ def main(config_file: str = "example_config.yml") -> GlobalStats:
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
+        # Default config file.
         config_file = "example_config.yml"
     elif len(sys.argv) == 2:
         config_file = len(sys.argv[1])
     else:
         raise ValueError("Expecting at most one config file.")
 
-    main(config_file)
+    with open(config_file, "r") as f:
+        config = yaml.safe_load(f)
+
+    simulate(config)
