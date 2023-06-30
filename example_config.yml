@@ -1,3 +1,6 @@
+# Verbosily of logging.
+log_verbosity: 2
+
 # How may cloud workers do we have in total.
 num_cloud_workers: 10
 

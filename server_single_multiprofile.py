@@ -1,4 +1,5 @@
-"""Server-side single version online strategy with multi-profile database.
+"""Server-side single version online strategy with multi-profile
+database (SSO-mul).
 
 We store multiple versions of profiles for each user in the database.
 Once the re-enrollment for a user has completed, we will store both
@@ -21,7 +22,7 @@ class MultiProfileFrontend(server_single_simple.ForegroundReenrollFrontend):
         """Fetch profiles from database and send request to worker."""
         # Part 1: Fetch database.
         if len(msg.profile_versions) == 0:
-            print(f"{self.name} fetch database at time {self.env.now}")
+            self.log("fetch database")
             yield from self.database.fetch_profile(msg)
             if len(msg.profile_versions) == 0:
                 raise ValueError("fetch_profile failed.")
@@ -44,7 +45,7 @@ class MultiProfileFrontend(server_single_simple.ForegroundReenrollFrontend):
     def resend_worker_request(self, msg: Message) -> Generator:
         """After re-enroll, send worker request again."""
         # Part 1: Update database with re-enrolled profile.
-        print(f"{self.name} update database at time {self.env.now}")
+        self.log("update database")
         yield from self.database.update_profile(msg)
 
         # Part 2: Re-send request to worker.

@@ -1,4 +1,4 @@
-"""Server-side single version online strategy with sync.
+"""Server-side single version online strategy with sync (SSO-sync).
 
 The frontend server can periodically send synchronization requests
 to all cloud computing servers, and maintain a table to record the

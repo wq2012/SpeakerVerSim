@@ -1,4 +1,4 @@
-"""Server-side single version online strategy with user hash.
+"""Server-side single version online strategy with user hash (SSO-hash).
 
 The frontend server implements a load balancing algorithm based
 on the hash value of the user’s ID, such that requests for each

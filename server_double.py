@@ -1,4 +1,4 @@
-"""Basic server-side double version online strategy."""
+"""Basic server-side double version online strategy (SDO)."""
 import simpy
 import yaml
 import random
@@ -47,7 +47,7 @@ class BackgroundReenrollFrontend(BaseFrontend):
         """Fetch profile from database and send request to worker."""
         # Part 1: Fetch database.
         if len(msg.profile_versions) == 0:
-            print(f"{self.name} fetch database at time {self.env.now}")
+            self.log("fetch database")
             yield from self.database.fetch_profile(msg)
             if len(msg.profile_versions) == 0:
                 raise ValueError("fetch_profile failed.")
@@ -71,7 +71,7 @@ class BackgroundReenrollFrontend(BaseFrontend):
 
     def update_database(self, msg: Message) -> Generator:
         """After background re-enroll, update database."""
-        print(f"{self.name} update database at time {self.env.now}")
+        self.log("update database")
         yield from self.database.update_profile(msg)
 
     def send_client_response(self, msg: Message) -> Generator:
@@ -98,7 +98,7 @@ class DoubleVersionWorker(BaseWorker):
 
     def handle_one_request(self, msg: Message) -> Generator:
         """Handle a single request and convert it to a reponse."""
-        print(f"{self.name} handle request at time {self.env.now}")
+        self.log("handle request")
         msg.worker_receive_time = self.env.now
         msg.worker_name = self.name
 
@@ -114,7 +114,7 @@ class DoubleVersionWorker(BaseWorker):
 
         # Run inference.
         yield from self.run_inference(msg)
-        print(f"{self.name} complete request at time {self.env.now}")
+        self.log("complete request")
 
         # Send response back to frontend.
         msg.is_request = False
@@ -129,7 +129,7 @@ class DoubleVersionWorker(BaseWorker):
         del self.versions[0]
         # Add newest version.
         self.versions.append(self.versions[-1] + 1)
-        print(f"{self.name} update model version")
+        self.log("update model version")
 
 
 class DoubleVersionNetworkSystem(NetworkSystem):

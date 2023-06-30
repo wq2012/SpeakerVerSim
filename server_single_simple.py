@@ -1,4 +1,4 @@
-"""Basic server-side single version online strategy."""
+"""Basic server-side single version online strategy (SSO)."""
 import simpy
 import random
 import yaml
@@ -54,7 +54,7 @@ class SimpleClient(BaseClient):
         """Receive the final responses."""
         while True:
             msg = yield self.message_pool.get()
-            print(f"{self.name} receive response at time {self.env.now}")
+            self.log("receive response")
             msg.client_return_time = self.env.now
             self.stats.final_messages.append(msg)
 
@@ -88,7 +88,7 @@ class ForegroundReenrollFrontend(BaseFrontend):
         """Fetch profile from database and send request to worker."""
         # Part 1: Fetch database.
         if msg.profile_version is None:
-            print(f"{self.name} fetch database at time {self.env.now}")
+            self.log("fetch database")
             yield from self.database.fetch_profile(msg)
             if msg.profile_version is None:
                 raise ValueError("fetch_profile failed.")
@@ -111,7 +111,7 @@ class ForegroundReenrollFrontend(BaseFrontend):
     def resend_worker_request(self, msg: Message) -> Generator:
         """After re-enroll, send worker request again."""
         # Part 1: Update database with re-enrolled profile.
-        print(f"{self.name} update database at time {self.env.now}")
+        self.log("update database")
         yield from self.database.update_profile(msg)
 
         # Part 2: Re-send request to worker.
@@ -141,7 +141,7 @@ class SingleVersionWorker(BaseWorker):
 
     def handle_one_request(self, msg: Message) -> Generator:
         """Handle a single request and convert it to a reponse."""
-        print(f"{self.name} handle request at time {self.env.now}")
+        self.log("handle request")
         msg.worker_receive_time = self.env.now
         msg.worker_name = self.name
 
@@ -151,7 +151,7 @@ class SingleVersionWorker(BaseWorker):
 
         # Run inference.
         yield from self.run_inference(msg)
-        print(f"{self.name} complete request at time {self.env.now}")
+        self.log("complete request")
 
         # Send response back to frontend.
         msg.is_request = False
@@ -163,7 +163,7 @@ class SingleVersionWorker(BaseWorker):
             1.0 / self.config["worker_update_mean_time"])
         yield self.env.timeout(update_time)
         self.version += 1
-        print(f"{self.name} update model version")
+        self.log("update model version")
 
 
 def simulate(config: dict[str, Any]) -> GlobalStats:

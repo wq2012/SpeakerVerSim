@@ -102,6 +102,13 @@ class Actor(abc.ABC):
         """Function to add processes."""
         pass
 
+    def log(self, text: str, verbosity: int = 2) -> None:
+        """A replacement of print function with verbosity level support."""
+        if verbosity <= self.config["log_verbosity"]:
+            timestamp = f"[{self.env.now:.5f}]"
+            name = f"[{self.name}]"
+            print(timestamp, name, text)
+
 
 class BaseDatabase(Actor):
     """Base class for a database."""
@@ -125,7 +132,7 @@ class BaseClient(Actor):
 
     def send_to_frontend(self, msg: Message) -> Generator:
         """Send a message to frontend. Simulates latency."""
-        print(f"{self.name} send request at time {self.env.now}")
+        self.log("send request")
         msg.client_send_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(self.config["client_frontend_latency"])
@@ -153,7 +160,7 @@ class BaseFrontend(Actor):
 
     def send_to_worker(self, worker: Actor, msg: Message) -> Generator:
         """Send a message to worker. Simulates latency."""
-        print(f"{self.name} send request at time {self.env.now}")
+        self.log("send request")
         if msg.is_enroll:
             msg.frontend_send_worker_enroll_time = self.env.now
         else:
@@ -164,7 +171,7 @@ class BaseFrontend(Actor):
 
     def send_to_client(self, msg: Message) -> Generator:
         """Send a message to client. Simulates latency."""
-        print(f"{self.name} send response at time {self.env.now}")
+        self.log("send response")
         msg.frontend_return_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(self.config["client_frontend_latency"])
@@ -192,7 +199,7 @@ class BaseWorker(Actor):
 
     def send_to_frontend(self, msg: Message) -> Generator:
         """Send a message to frontend. Simulates latency."""
-        print(f"{self.name} send response at time {self.env.now}")
+        self.log("send response")
         msg.worker_return_time = self.env.now
         # Simulate network latency.
         yield self.env.timeout(self.config["frontend_worker_latency"])
@@ -200,7 +207,7 @@ class BaseWorker(Actor):
 
     def run_inference(self, msg: Message) -> Generator:
         """Run inference of speech engine. Simulates latency."""
-        print(f"{self.name} run inference at time {self.env.now}")
+        self.log("run inference")
         # Simulate computation latency.
         yield self.env.timeout(self.config["worker_inference_latency"])
         msg.total_flops += self.config["flops_per_inference"]
