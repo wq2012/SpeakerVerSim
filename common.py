@@ -12,11 +12,16 @@ import random
 class Message:
     """A message being communicated between actors."""
 
+    # Unique ID of this message.
+    msg_id: int = 0
+
     # Unique ID of the user.
     user_id: int = 0
 
     # Unique ID of the version of the profile.
     # Will be updated after fetching profile from database.
+    # For enrollment responses, the enrollment version will always
+    # be stored in this field, and never in profile_versions.
     profile_version: Optional[int] = None
 
     # Similar to profile_version, but contains multiple versions.
@@ -169,14 +174,21 @@ class BaseFrontend(Actor):
 class BaseWorker(Actor):
     """Base class for a cloud worker."""
     frontend: BaseFrontend
-    # TODO: add multi-version worker
+
+    # For single version worker.
     version: int
+
+    # For multi version worker.
+    versions: list[int]
 
     def set_frontend(self, frontend: BaseFrontend) -> None:
         self.frontend = frontend
 
     def set_model_version(self, version: int) -> None:
         self.version = version
+
+    def set_model_versions(self, versions: list[int]) -> None:
+        self.versions = versions
 
     def send_to_frontend(self, msg: Message) -> Generator:
         """Send a message to frontend. Simulates latency."""
@@ -272,6 +284,8 @@ class MultiVersionDatabase(BaseDatabase):
             if msg.profile_version not in self.data[msg.user_id]:
                 self.data[msg.user_id].append(msg.profile_version)
         else:
+            raise ValueError("profile_version should not be empty.")
+            # TODO: remove
             # From multi version worker.
             if len(msg.profile_versions) == 0:
                 raise ValueError("Expecting non-empty profile_versions.")
@@ -301,8 +315,7 @@ class NetworkSystem:
         self.database = database
 
         # Set worker model version.
-        for worker in self.workers:
-            worker.set_model_version(1)
+        self.set_worker_model_version(self.workers)
 
         # Build connections.
         self.client.set_frontend(self.frontend)
@@ -317,6 +330,10 @@ class NetworkSystem:
         self.frontend.setup()
         for worker in self.workers:
             worker.setup()
+
+    def set_worker_model_version(self, workers: list[BaseWorker]):
+        for worker in workers:
+            worker.set_model_version(1)
 
 
 def print_results(netsys: NetworkSystem) -> None:

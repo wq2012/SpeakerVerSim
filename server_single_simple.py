@@ -19,6 +19,7 @@ class SimpleClient(BaseClient):
 
     def create_init_request(self) -> Message:
         return Message(
+            msg_id=random.randint(0, sys.maxsize),
             user_id=0,
             is_request=True,
             is_enroll=False,
@@ -122,7 +123,6 @@ class SingleVersionWorker(BaseWorker):
             if msg.is_request:
                 self.env.process(self.handle_one_request(msg))
             else:
-                print(msg)
                 raise ValueError("Not expecting responses to worker.")
 
     def handle_one_request(self, msg: Message) -> Generator:
