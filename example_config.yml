@@ -20,19 +20,27 @@ client_frontend_latency: 0.244
 frontend_worker_latency: 0.0012
 
 # Latency for database IO.
+# Assume profile size is 256-dim vector of floating point numbers.
+# Typical read latency: 0.5 ms
+# Typical write latency: 10 ms
 database_read_latency: 0.0005
 database_write_latency: 0.01
-database_io_latency: 0.005
 
 # Latency to run speech inference engine.
-# TODO: update
+# Typical RTF of non-streaming speech inference: 0.1
+# Typical audio length: 5s
+# Thus here we use 0.1 * 5 = 0.5
 worker_inference_latency: 0.5
 
 # Flops cost to run one inference.
-# TODO: update
-flops_per_inference: 1000000
+# In Turn-to-Diarize (https://arxiv.org/abs/2109.11641), example
+# speaker recogntion model uses 0.42Gflops to process 1s of audio.
+# Typical audio length: 5s
+# Thus here we use: 0.42 * 1000000000 * 5 = 
+flops_per_inference: 2100000000
 
 # How often do we send requests.
+# Here we use 10 s.
 client_request_interval: 10
 
 # Mean time of a model version update for each worker.
