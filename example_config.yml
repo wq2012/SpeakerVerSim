@@ -1,4 +1,4 @@
-# Verbosily of logging.
+# Verbosily of logging. Larger is more verbose.
 log_verbosity: 2
 
 # How may cloud workers do we have in total.

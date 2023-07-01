@@ -103,7 +103,13 @@ class Actor(abc.ABC):
         pass
 
     def log(self, text: str, verbosity: int = 2) -> None:
-        """A replacement of print function with verbosity level support."""
+        """A replacement of print function with verbosity level support.
+
+        Use this conversion:
+            0: fatal / error
+            1: warning
+            2: info
+        """
         if verbosity <= self.config["log_verbosity"]:
             timestamp = f"[{self.env.now:.5f}]"
             name = f"[{self.name}]"

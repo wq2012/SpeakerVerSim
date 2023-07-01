@@ -143,7 +143,7 @@ class DoubleVersionNetworkSystem(NetworkSystem):
             worker.set_model_versions([1, 2])
 
 
-def simulate(config: dict[str, Any]) -> GlobalStats:
+def simulate(config: dict[str, Any], print_stats: bool = True) -> GlobalStats:
     """Run simulation."""
     env = simpy.Environment()
     stats = GlobalStats(config=config)
@@ -162,7 +162,8 @@ def simulate(config: dict[str, Any]) -> GlobalStats:
         database)
 
     env.run(until=config["time_to_run"])
-    print_results(netsys)
+    if print_stats:
+        print_results(netsys)
     return netsys.client.stats
 
 
