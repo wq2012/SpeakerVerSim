@@ -35,7 +35,7 @@ def simulate(config: dict[str, Any], print_stats: bool = True) -> GlobalStats:
             env, f"worker-{i}", config, stats)
         for i in range(config["num_cloud_workers"])]
     database = SingleVersionDatabase(env, "database", config, stats)
-    database.create({0: 1})
+    database.create(init_version=1)
     netsys = NetworkSystem(
         env,
         client,

@@ -153,7 +153,7 @@ def simulate(config: dict[str, Any], print_stats: bool = True) -> GlobalStats:
         DoubleVersionWorker(env, f"worker-{i}", config, stats)
         for i in range(config["num_cloud_workers"])]
     database = MultiVersionDatabase(env, "database", config, stats)
-    database.create({0: [1, 2]})
+    database.create(init_versions=[1, 2])
     netsys = DoubleVersionNetworkSystem(
         env,
         client,

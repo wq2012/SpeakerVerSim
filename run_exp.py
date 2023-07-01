@@ -36,11 +36,11 @@ def main():
         config["num_cloud_workers"] = num_workers
 
         for num_users in NUM_USERS:
-            print(f"Simulation for {num_users} users...")
+            print(f"  Simulation for {num_users} users...")
             config["num_users"] = num_users
             # With more users, also increase QPS.
-            # So in averager, per-user QPS is still 0.1.
-            config["client_request_interval"] = 10 / num_users
+            if num_users > 1:
+                config["client_request_interval"] = 1
 
             for _ in trange(NUM_RUNS):
                 results["SSO"].append(
@@ -61,7 +61,8 @@ def main():
 
             results_file = os.path.join(
                 "result_stats",
-                f"results_{num_workers}workers_{num_users}users_{NUM_RUNS}runs.pickle")
+                "results_{}workers_{}users_{}runs.pickle".format(
+                    num_workers, num_users, NUM_RUNS))
             with open(results_file, "wb") as f:
                 pickle.dump(results, f)
 

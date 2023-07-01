@@ -153,3 +153,4 @@ cython_debug/
 
 #  Other
 ignore/
+result_stats/

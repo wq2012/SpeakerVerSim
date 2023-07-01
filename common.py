@@ -99,7 +99,7 @@ class Actor(abc.ABC):
 
     @abc.abstractmethod
     def setup() -> None:
-        """Function to add processes."""
+        """Function to add processes and other initializations."""
         pass
 
     def log(self, text: str, verbosity: int = 2) -> None:
@@ -232,9 +232,11 @@ class SingleVersionDatabase(BaseDatabase):
         """No processes."""
         pass
 
-    def create(self, data: dict[int, int] = {}):
-        """Create a mapping from user_id to version_id(s)."""
-        self.data = data
+    def create(self, init_version: int) -> None:
+        """Add initial version for all users."""
+        self.data = {}
+        for user_id in range(self.config["num_users"]):
+            self.data[user_id] = init_version
 
     def fetch_profile(self, msg: Message) -> Generator:
         """Fetch profile from database. Simulates latency."""
@@ -267,9 +269,11 @@ class MultiVersionDatabase(BaseDatabase):
         """No processes."""
         pass
 
-    def create(self, data: dict[int, list[int]] = {}):
-        """Create a mapping from user_id to version_id(s)."""
-        self.data = data
+    def create(self, init_versions: list[int]) -> None:
+        """Add initial versions for all users."""
+        self.data = {}
+        for user_id in range(self.config["num_users"]):
+            self.data[user_id] = init_versions
 
     def fetch_profile(self, msg: Message) -> Generator:
         """Fetch profiles from database. Simulates latency."""
