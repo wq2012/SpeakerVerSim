@@ -334,6 +334,9 @@ class NetworkSystem:
         # Set database.
         self.database = database
 
+        # Config.
+        self.config = self.client.config
+
         # Set worker model version.
         self.set_worker_model_version(self.workers)
 
@@ -355,21 +358,23 @@ class NetworkSystem:
         for worker in workers:
             worker.set_model_version(1)
 
+    def aggregate_metrics(self) -> GlobalStats:
+        """Aggregate metrics, and maybe print."""
+        stats = self.client.stats
+        stats.total_num_messages = len(stats.final_messages)
+        for msg in stats.final_messages:
+            stats.average_e2e_latency += (
+                msg.client_return_time - msg.client_send_time)
+            stats.average_total_flops += msg.total_flops
+        stats.average_e2e_latency /= stats.total_num_messages
+        stats.average_total_flops /= stats.total_num_messages
 
-def print_results(netsys: NetworkSystem) -> None:
-    # Aggregate metrics.
-    stats = netsys.client.stats
-    stats.total_num_messages = len(stats.final_messages)
-    for msg in stats.final_messages:
-        stats.average_e2e_latency += (
-            msg.client_return_time - msg.client_send_time)
-        stats.average_total_flops += msg.total_flops
-    stats.average_e2e_latency /= stats.total_num_messages
-    stats.average_total_flops /= stats.total_num_messages
+        if self.config["print_stats"]:
+            print("========================================")
+            print("Global stats:")
+            stats_short = copy.deepcopy(stats)
+            stats_short.final_messages = None
+            stats_short.workload = None
+            print(stats_short)
 
-    print("========================================")
-    print("Global stats:")
-    stats_short = copy.deepcopy(stats)
-    stats_short.final_messages = None
-    stats_short.workload = None
-    print(stats_short)
+        return stats

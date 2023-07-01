@@ -7,7 +7,7 @@ import sys
 
 from common import (Message, BaseClient, BaseFrontend,
                     BaseWorker, NetworkSystem, SingleVersionDatabase,
-                    GlobalStats, print_results)
+                    GlobalStats)
 
 
 class SimpleClient(BaseClient):
@@ -166,7 +166,7 @@ class SingleVersionWorker(BaseWorker):
         self.log("update model version")
 
 
-def simulate(config: dict[str, Any], print_stats: bool = True) -> GlobalStats:
+def simulate(config: dict[str, Any]) -> GlobalStats:
     """Run simulation."""
     env = simpy.Environment()
     stats = GlobalStats(config=config)
@@ -185,9 +185,7 @@ def simulate(config: dict[str, Any], print_stats: bool = True) -> GlobalStats:
         database)
 
     env.run(until=config["time_to_run"])
-    if print_stats:
-        print_results(netsys)
-    return netsys.client.stats
+    return netsys.aggregate_metrics()
 
 
 if __name__ == "__main__":

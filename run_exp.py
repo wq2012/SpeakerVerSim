@@ -13,6 +13,7 @@ import server_double
 NUM_RUNS = 100
 NUM_USERS = [1, 100, 1000]
 NUM_WORKERS = [10, 100, 500]
+OUTPUT_DIR = "result_stats"
 
 
 def main():
@@ -22,6 +23,10 @@ def main():
 
     # Less verbose logging.
     config["log_verbosity"] = 0
+    config["print_stats"] = False
+
+    # Create output dir.
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     for num_users in NUM_USERS:
         print(f"  Simulation for {num_users} users...")
@@ -44,23 +49,18 @@ def main():
 
             for _ in trange(NUM_RUNS):
                 results["SSO"].append(
-                    server_single_simple.simulate(
-                        config, print_stats=False))
+                    server_single_simple.simulate(config))
                 results["SSO-sync"].append(
-                    server_single_sync.simulate(
-                        config, print_stats=False))
+                    server_single_sync.simulate(config))
                 results["SSO-hash"].append(
-                    server_single_hash.simulate(
-                        config,  print_stats=False))
+                    server_single_hash.simulate(config))
                 results["SSO-mul"].append(
-                    server_single_multiprofile.simulate(
-                        config, print_stats=False))
+                    server_single_multiprofile.simulate(config))
                 results["SDO"].append(
-                    server_double.simulate(
-                        config, print_stats=False))
+                    server_double.simulate(config))
 
             results_file = os.path.join(
-                "result_stats",
+                OUTPUT_DIR,
                 "results_{}workers_{}users_{}runs.pickle".format(
                     num_workers, num_users, NUM_RUNS))
             with open(results_file, "wb") as f:

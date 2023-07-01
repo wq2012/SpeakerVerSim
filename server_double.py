@@ -8,7 +8,7 @@ import copy
 
 from common import (Message, BaseFrontend,
                     BaseWorker, NetworkSystem, MultiVersionDatabase,
-                    GlobalStats, print_results)
+                    GlobalStats)
 import server_single_simple
 
 
@@ -143,7 +143,7 @@ class DoubleVersionNetworkSystem(NetworkSystem):
             worker.set_model_versions([1, 2])
 
 
-def simulate(config: dict[str, Any], print_stats: bool = True) -> GlobalStats:
+def simulate(config: dict[str, Any]) -> GlobalStats:
     """Run simulation."""
     env = simpy.Environment()
     stats = GlobalStats(config=config)
@@ -162,9 +162,7 @@ def simulate(config: dict[str, Any], print_stats: bool = True) -> GlobalStats:
         database)
 
     env.run(until=config["time_to_run"])
-    if print_stats:
-        print_results(netsys)
-    return netsys.client.stats
+    return netsys.aggregate_metrics()
 
 
 if __name__ == "__main__":

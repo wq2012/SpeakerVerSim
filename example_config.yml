@@ -1,6 +1,9 @@
 # Verbosily of logging. Larger is more verbose.
 log_verbosity: 2
 
+# Whehter to print stats to screen during simulation.
+print_stats: True
+
 # How may cloud workers do we have in total.
 num_cloud_workers: 10
 
