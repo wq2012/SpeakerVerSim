@@ -71,6 +71,9 @@ class GlobalStats:
     # Configuration of the experiment.
     config: dict[str, Any] = dataclasses.field(default_factory=dict)
 
+    # Length of final_messages.
+    total_num_messages: int = 0
+
     # Workload of the workers, as a mapping from name to
     # (time, flops) pairs.
     workload: dict[str, list[tuple[float, float]]
@@ -356,13 +359,13 @@ class NetworkSystem:
 def print_results(netsys: NetworkSystem) -> None:
     # Aggregate metrics.
     stats = netsys.client.stats
-    num_messages = len(stats.final_messages)
+    stats.total_num_messages = len(stats.final_messages)
     for msg in stats.final_messages:
         stats.average_e2e_latency += (
             msg.client_return_time - msg.client_send_time)
         stats.average_total_flops += msg.total_flops
-    stats.average_e2e_latency /= num_messages
-    stats.average_total_flops /= num_messages
+    stats.average_e2e_latency /= stats.total_num_messages
+    stats.average_total_flops /= stats.total_num_messages
 
     print("========================================")
     print("Global stats:")

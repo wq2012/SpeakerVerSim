@@ -32,11 +32,11 @@ class SimpleClient(BaseClient):
         Total number of users is self.config["num_users"].
 
         Different users send requests with different frequency.
-        Here we assume each user sends requests twice more frequent than the
-        previous user.
+        Here we assume each user sends requests slightly more frequent
+        than the previous user (linearly).
         """
         user_ids = list(range(self.config["num_users"]))
-        user_weights = [2**x for x in user_ids]
+        user_weights = [x + 1 for x in user_ids]
         return random.choices(user_ids, weights=user_weights, k=1)[0]
 
     def send_frontend_requests(self) -> Generator:
