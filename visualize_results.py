@@ -84,6 +84,45 @@ def visualize_aggregated_metrics(
     plt.close()
 
 
+def visualize_workload(
+        num_users: int,
+        num_workers: int,
+        figure_name: str):
+
+    results_file = os.path.join(
+        STATS_DIR,
+        "results_{}workers_{}users_{}runs.pickle".format(
+            num_workers, num_users, NUM_RUNS))
+    with open(results_file, "rb") as f:
+        results = pickle.load(f)
+
+    _, axes = plt.subplots(len(STRATEGIES), 1, figsize=(10, 20))
+    for row, strategy in enumerate(STRATEGIES):
+        stats = results[strategy][0]
+        x = []
+        weights = []
+        hue = []
+        for i in range(num_workers):
+            worker_name = f"worker-{i}"
+            if worker_name not in stats.workload:
+                stats.workload[worker_name] = []
+            for event_time, event_flops in stats.workload[worker_name]:
+                x.append(event_time)
+                weights.append(event_flops)
+                hue.append(worker_name)
+
+        ax = sns.kdeplot(ax=axes[row], x=x,
+                         weights=weights, hue=hue, bw_adjust=0.05,
+                         clip=[100, stats.config["time_to_run"]-100])
+        ax.set_title(strategy)
+        ax.set(xticks=[], xlabel="")
+        ax.set(yticks=[], ylabel="")
+
+    plt.tight_layout()
+    plt.savefig(os.path.join("figures", figure_name))
+    plt.close()
+
+
 def main():
     # Create output dir.
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -140,6 +179,13 @@ def main():
         label="Backward bounce rate",
         figure_name="backward_bounce_rate.png",
         get_metrics=lambda x: x.backward_bounce_count / x.total_num_messages,
+    )
+
+    # Workload.
+    visualize_workload(
+        num_users=10,
+        num_workers=100,
+        figure_name="workload_100workers_100users.png",
     )
 
 
