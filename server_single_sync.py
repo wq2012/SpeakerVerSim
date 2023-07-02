@@ -79,7 +79,7 @@ class VersionSyncFrontend(server_single_simple.ForegroundReenrollFrontend):
         """Send one query to one worker."""
         query = VersionQuery()
         # Simulate network latency.
-        yield self.env.timeout(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config["frontend_worker_latency"])
         worker.query_pool.put(query)  # pytype: disable=attribute-error
 
     def handle_version_responses(self) -> Generator:
@@ -122,7 +122,7 @@ class VersionSyncWorker(server_single_simple.SingleVersionWorker):
             raise ValueError("Query received by worker must be request.")
 
         # Simulate network latency.
-        yield self.env.timeout(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config["frontend_worker_latency"])
         self.frontend.query_pool.put(query)  # pytype: disable=attribute-error
 
 

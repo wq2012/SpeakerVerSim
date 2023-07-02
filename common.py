@@ -8,6 +8,9 @@ import abc
 import random
 
 
+EPS = 1e-10
+
+
 @dataclasses.dataclass
 class Message:
     """A message being communicated between actors."""
@@ -124,6 +127,12 @@ class Actor(abc.ABC):
             name = f"[{self.name}]"
             print(timestamp, name, text)
 
+    def get_latency(self, mu: float) -> simpy.events.Timeout:
+        """Simulate latency, which has a Gaussian distribution."""
+        sigma = mu / 10.0
+        latency = max(random.gauss(mu, sigma), EPS)
+        return self.env.timeout(latency)
+
 
 class BaseDatabase(Actor):
     """Base class for a database."""
@@ -150,7 +159,7 @@ class BaseClient(Actor):
         self.log("send request")
         msg.client_send_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(self.config["client_frontend_latency"])
+        yield self.get_latency(self.config["client_frontend_latency"])
         self.frontend.message_pool.put(msg)
 
 
@@ -181,7 +190,7 @@ class BaseFrontend(Actor):
         else:
             msg.frontend_send_worker_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config["frontend_worker_latency"])
         worker.message_pool.put(msg)
 
     def send_to_client(self, msg: Message) -> Generator:
@@ -189,7 +198,7 @@ class BaseFrontend(Actor):
         self.log("send response")
         msg.frontend_return_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(self.config["client_frontend_latency"])
+        yield self.get_latency(self.config["client_frontend_latency"])
         self.client.message_pool.put(msg)
 
 
@@ -217,14 +226,14 @@ class BaseWorker(Actor):
         self.log("send response")
         msg.worker_return_time = self.env.now
         # Simulate network latency.
-        yield self.env.timeout(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config["frontend_worker_latency"])
         self.frontend.message_pool.put(msg)
 
     def run_inference(self, msg: Message) -> Generator:
         """Run inference of speech engine. Simulates latency."""
         self.log("run inference")
         # Simulate computation latency.
-        yield self.env.timeout(self.config["worker_inference_latency"])
+        yield self.get_latency(self.config["worker_inference_latency"])
         msg.total_flops += self.config["flops_per_inference"]
 
         # Add to stats.
@@ -254,7 +263,7 @@ class SingleVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
-        yield self.env.timeout(self.config["database_read_latency"])
+        yield self.get_latency(self.config["database_read_latency"])
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
 
@@ -267,7 +276,7 @@ class SingleVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
-        yield self.env.timeout(self.config["database_write_latency"])
+        yield self.get_latency(self.config["database_write_latency"])
         self.data[msg.user_id] = msg.profile_version
 
 
@@ -291,7 +300,7 @@ class MultiVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
-        yield self.env.timeout(self.config["database_read_latency"])
+        yield self.get_latency(self.config["database_read_latency"])
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
 
@@ -304,7 +313,7 @@ class MultiVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
-        yield self.env.timeout(self.config["database_write_latency"])
+        yield self.get_latency(self.config["database_write_latency"])
         if msg.profile_version is not None:
             # From single version worker.
             if msg.profile_version not in self.data[msg.user_id]:

@@ -43,7 +43,8 @@ class SimpleClient(BaseClient):
             user_weights = [0.8**x for x in user_ids]
         else:
             raise ValueError(
-                "Unsupported user_distribution: " + self.config["user_distribution"])
+                "Unsupported user_distribution: {}".format(
+                    self.config["user_distribution"]))
         return random.choices(user_ids, weights=user_weights, k=1)[0]
 
     def send_frontend_requests(self) -> Generator:
