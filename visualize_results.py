@@ -12,11 +12,52 @@ STATS_DIR = "result_stats"
 OUTPUT_DIR = "figures"
 
 
+def visualize_single_run_metrics(
+        num_users: int,
+        label: str,
+        figure_name: str,
+        get_metrics: Callable):
+    """Visualize the metrics of a single simulation run.
+
+    get_metrics is called on one final message.
+    """
+    x = []
+    y = []
+    hue = []
+    for num_workers in NUM_WORKERS:
+        results_file = os.path.join(
+            STATS_DIR,
+            "results_{}workers_{}users_{}runs.pickle".format(
+                num_workers, num_users, NUM_RUNS))
+        with open(results_file, "rb") as f:
+            results = pickle.load(f)
+
+        for strategy in STRATEGIES:
+            # Only first run.
+            stats = results[strategy][0]
+
+            for msg in stats.final_messages:
+                x.append(strategy)
+                y.append(get_metrics(msg))
+                hue.append(num_workers)
+    ax = sns.boxplot(x=x, y=y, hue=hue)
+    ax.legend(title="Number of workers")
+    ax.set_xlabel("Strategy")
+    ax.set_ylabel(label)
+    plt.tight_layout()
+    plt.savefig(os.path.join("figures", figure_name))
+    plt.close()
+
+
 def visualize_aggregated_metrics(
         num_users: int,
         label: str,
         figure_name: str,
         get_metrics: Callable):
+    """Visualize the metrics aggregated on many simulation runs.
+
+    get_metrics is called on stats.
+    """
     x = []
     y = []
     hue = []
@@ -50,6 +91,13 @@ def main():
     sns.set_theme(palette="colorblind")
 
     # End-to-end latency.
+    visualize_single_run_metrics(
+        num_users=1,
+        label="End-to-end latency",
+        figure_name="e2e_latency.png",
+        get_metrics=lambda x: x.client_return_time - x.client_send_time,
+    )
+
     visualize_aggregated_metrics(
         num_users=1,
         label="End-to-end latency",
@@ -58,6 +106,13 @@ def main():
     )
 
     # Total flops per request.
+    visualize_single_run_metrics(
+        num_users=1,
+        label="Flops",
+        figure_name="total_flops.png",
+        get_metrics=lambda x: x.total_flops,
+    )
+
     visualize_aggregated_metrics(
         num_users=1,
         label="Flops per request",

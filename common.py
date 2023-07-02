@@ -65,7 +65,7 @@ class GlobalStats:
     # Average latency for fulfilling one request.
     average_e2e_latency: float = 0
 
-    # Average flops for fulling one request.
+    # Average flops for fulfilling one request.
     average_total_flops: float = 0
 
     # Configuration of the experiment.
