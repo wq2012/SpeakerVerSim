@@ -65,8 +65,14 @@ class GlobalStats:
     # Average latency for fulfilling one request.
     average_e2e_latency: float = 0
 
+    # Max latency for fulfilling one request.
+    max_e2e_latency: float = 0
+
     # Average flops for fulfilling one request.
     average_total_flops: float = 0
+
+    # Max flops for fulfilling one request.
+    max_total_flops: float = 0
 
     # Configuration of the experiment.
     config: dict[str, Any] = dataclasses.field(default_factory=dict)
@@ -365,7 +371,12 @@ class NetworkSystem:
         for msg in stats.final_messages:
             stats.average_e2e_latency += (
                 msg.client_return_time - msg.client_send_time)
+            stats.max_e2e_latency = max(
+                stats.max_e2e_latency,
+                msg.client_return_time - msg.client_send_time)
             stats.average_total_flops += msg.total_flops
+            stats.max_total_flops = max(
+                stats.max_total_flops, msg.total_flops)
         stats.average_e2e_latency /= stats.total_num_messages
         stats.average_total_flops /= stats.total_num_messages
 

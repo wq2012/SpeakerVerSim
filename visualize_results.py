@@ -100,9 +100,16 @@ def main():
 
     visualize_aggregated_metrics(
         num_users=1,
-        label="End-to-end latency",
+        label="Average end-to-end latency",
         figure_name="average_e2e_latency.png",
         get_metrics=lambda x: x.average_e2e_latency,
+    )
+
+    visualize_aggregated_metrics(
+        num_users=1,
+        label="Max end-to-end latency",
+        figure_name="max_e2e_latency.png",
+        get_metrics=lambda x: x.max_e2e_latency,
     )
 
     # Total flops per request.
@@ -115,9 +122,16 @@ def main():
 
     visualize_aggregated_metrics(
         num_users=1,
-        label="Flops per request",
+        label="Average flops per request",
         figure_name="average_total_flops.png",
         get_metrics=lambda x: x.average_total_flops,
+    )
+
+    visualize_aggregated_metrics(
+        num_users=1,
+        label="Max flops per request",
+        figure_name="max_total_flops.png",
+        get_metrics=lambda x: x.max_total_flops,
     )
 
     # Backward bounce rate.
