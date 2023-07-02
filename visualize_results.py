@@ -1,6 +1,7 @@
 import seaborn as sns
 import pickle
 import os
+from typing import Callable
 import matplotlib.pyplot as plt
 
 NUM_RUNS = 100
@@ -11,8 +12,11 @@ STATS_DIR = "result_stats"
 OUTPUT_DIR = "figures"
 
 
-def visualize_e2e_latency():
-    num_users = 1
+def visualize_aggregated_metrics(
+        num_users: int,
+        label: str,
+        figure_name: str,
+        get_metrics: Callable):
     x = []
     y = []
     hue = []
@@ -28,22 +32,46 @@ def visualize_e2e_latency():
             for run in range(NUM_RUNS):
                 stats = results[strategy][run]
                 x.append(strategy)
-                y.append(stats.average_e2e_latency)
+                y.append(get_metrics(stats))
                 hue.append(num_workers)
     ax = sns.boxplot(x=x, y=y, hue=hue)
     ax.legend(title="Number of workers")
     ax.set_xlabel("Strategy")
-    ax.set_ylabel("End-to-end latency")
+    ax.set_ylabel(label)
     plt.tight_layout()
-    plt.savefig(os.path.join("figures", "average_e2e_latency.png"))
+    plt.savefig(os.path.join("figures", figure_name))
+    plt.close()
 
 
 def main():
     # Create output dir.
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    sns.set_theme()
-    visualize_e2e_latency()
+    sns.set_theme(palette="colorblind")
+
+    # End-to-end latency.
+    visualize_aggregated_metrics(
+        num_users=1,
+        label="End-to-end latency",
+        figure_name="average_e2e_latency.png",
+        get_metrics=lambda x: x.average_e2e_latency,
+    )
+
+    # Total flops per request.
+    visualize_aggregated_metrics(
+        num_users=1,
+        label="Flops per request",
+        figure_name="average_total_flops.png",
+        get_metrics=lambda x: x.average_total_flops,
+    )
+
+    # Backward bounce rate.
+    visualize_aggregated_metrics(
+        num_users=1,
+        label="Backward bounce rate",
+        figure_name="backward_bounce_rate.png",
+        get_metrics=lambda x: x.backward_bounce_count / x.total_num_messages,
+    )
 
 
 if __name__ == "__main__":
