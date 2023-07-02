@@ -31,12 +31,19 @@ class SimpleClient(BaseClient):
 
         Total number of users is self.config["num_users"].
 
-        Different users send requests with different frequency.
-        Here we assume each user sends requests slightly more frequent
-        than the previous user (linearly).
+        Different users send requests with different frequency, depending
+        on self.config["user_distribution"].
         """
         user_ids = list(range(self.config["num_users"]))
-        user_weights = [x + 1 for x in user_ids]
+        if self.config["user_distribution"] == "uniform":
+            user_weights = [1 for _ in user_ids]
+        elif self.config["user_distribution"] == "linear":
+            user_weights = [x + 1 for x in user_ids]
+        elif self.config["user_distribution"] == "exponential":
+            user_weights = [0.8**x for x in user_ids]
+        else:
+            raise ValueError(
+                "Unsupported user_distribution: " + self.config["user_distribution"])
         return random.choices(user_ids, weights=user_weights, k=1)[0]
 
     def send_frontend_requests(self) -> Generator:

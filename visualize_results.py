@@ -88,6 +88,7 @@ def visualize_workload(
         num_users: int,
         num_workers: int,
         figure_name: str):
+    """Visualize the workload of different workers over time."""
 
     results_file = os.path.join(
         STATS_DIR,
@@ -183,9 +184,9 @@ def main():
 
     # Workload.
     visualize_workload(
-        num_users=10,
-        num_workers=100,
-        figure_name="workload_100workers_100users.png",
+        num_users=100,
+        num_workers=10,
+        figure_name="workload_10workers_100users.png",
     )
 
 

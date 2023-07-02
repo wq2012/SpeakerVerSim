@@ -52,6 +52,10 @@ client_request_interval: 10
 # Number of users that send requests.
 num_users: 1
 
+# The distribution of requests from different users.
+# This can be "uniform", "linear", or "exponential".
+user_distribution: "exponential"
+
 # Mean time of a model version update for each worker.
 # Actual time follows an exponential distribution.
 # Here we use 1 hour.
