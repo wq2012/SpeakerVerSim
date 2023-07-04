@@ -1,10 +1,20 @@
 # SpeakerVerSim [![Python application](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml/badge.svg)](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml)
 
-Simulation experiments of version control strategies for speaker recognition systems.
+SpeakerVerSim is an easily-extensible Python-based simulation framework for different version control stategies of speaker recognition systems under different network configurations.
 
-These simulations are used in this [paper](https://arxiv.org/abs/2007.12069).
+These simulations are used in the paper [Version Control of Speaker Recognition Systems](https://arxiv.org/abs/2007.12069).
 
-Cite the paper as:
+## List of implemented strategies
+
+| Script                          | Strategy    | Description |
+| ------------------------------- | ----------- | ----------- |
+| `server_single_simple.py`       | SSO         | Basic server-side single version online updating strategy.
+| `server_single_sync.py`         | SSO-sync    | Server-side single version online updating strategy with frontend-worker version sync.
+| `server_single_hash.py`         | SSO-hash    | Server-side single version online updating strategy with user-ID hashing.
+| `server_single_multiprofile.py` | SSO-mul     | Server-side single version online updating strategy with multi-profile database.
+| `server_single_sync.py`         | SDO         | Server-side double version updating strategy.
+
+## Citation
 
 ```
 @article{wang2020version,
@@ -14,8 +24,3 @@ Cite the paper as:
   year={2020}
 }
 ```
-
-Scripts:
-
-* `server_single_simple.py`: Basic server-side single version online updating strategy.
-* `server_single_sync.py`: Server-side single version online updating strategy with frontend-worker version sync.
