@@ -7,7 +7,6 @@ from . import server_single_hash
 from . import server_single_multiprofile
 from . import server_double
 from . import simulator
-from . import visualize_results
 
 
 Message = common.Message
@@ -39,7 +38,3 @@ DoubleVersionWorker = server_double.DoubleVersionWorker
 DoubleVersionNetworkSystem = server_double.DoubleVersionNetworkSystem
 
 simulate = simulator.simulate
-
-visualize_single_run_metrics = visualize_results.visualize_single_run_metrics
-visualize_aggregated_metrics = visualize_results.visualize_aggregated_metrics
-visualize_workload = visualize_results.visualize_workload
