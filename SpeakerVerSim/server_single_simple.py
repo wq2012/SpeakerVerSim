@@ -5,9 +5,9 @@ import yaml
 from typing import Generator, Any
 import sys
 
-from common import (Message, BaseClient, BaseFrontend,
-                    BaseWorker, NetworkSystem, SingleVersionDatabase,
-                    GlobalStats)
+from SpeakerVerSim.common import (
+    Message, BaseClient, BaseFrontend, BaseWorker,
+    NetworkSystem, SingleVersionDatabase, GlobalStats)
 
 
 class SimpleClient(BaseClient):
@@ -176,6 +176,8 @@ class SingleVersionWorker(BaseWorker):
 
 def simulate(config: dict[str, Any]) -> GlobalStats:
     """Run simulation."""
+    if config["strategy"] != "SSO":
+        raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)
     client = SimpleClient(env, "client", config, stats)

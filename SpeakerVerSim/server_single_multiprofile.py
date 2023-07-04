@@ -10,9 +10,10 @@ import sys
 import yaml
 from typing import Generator, Any
 
-from common import (Message, NetworkSystem, MultiVersionDatabase,
-                    GlobalStats)
-import server_single_simple
+from SpeakerVerSim.common import (
+    Message, NetworkSystem, MultiVersionDatabase,
+    GlobalStats)
+from SpeakerVerSim import server_single_simple
 
 
 class MultiProfileFrontend(server_single_simple.ForegroundReenrollFrontend):
@@ -55,6 +56,8 @@ class MultiProfileFrontend(server_single_simple.ForegroundReenrollFrontend):
 
 def simulate(config: dict[str, Any]) -> GlobalStats:
     """Run simulation."""
+    if config["strategy"] != "SSO-mul":
+        raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)
     client = server_single_simple.SimpleClient(env, "client", config, stats)

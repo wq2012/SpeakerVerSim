@@ -1,13 +1,10 @@
+"""Batch script to run experiments reported in the paper."""
 import pickle
 import yaml
 from tqdm import trange
 import os
 
-import server_single_simple
-import server_single_sync
-import server_single_hash
-import server_single_multiprofile
-import server_double
+from SpeakerVerSim import simulator, STRATEGIES
 
 
 NUM_RUNS = 100
@@ -39,25 +36,13 @@ def main():
             print(f"Simulation for {num_workers} workers...")
             config["num_cloud_workers"] = num_workers
 
-            results = {
-                "SSO": [],
-                "SSO-sync": [],
-                "SSO-hash": [],
-                "SSO-mul": [],
-                "SDO": [],
-            }
+            # Initialize the results.
+            results = {strategy: [] for strategy in STRATEGIES}
 
             for _ in trange(NUM_RUNS):
-                results["SSO"].append(
-                    server_single_simple.simulate(config))
-                results["SSO-sync"].append(
-                    server_single_sync.simulate(config))
-                results["SSO-hash"].append(
-                    server_single_hash.simulate(config))
-                results["SSO-mul"].append(
-                    server_single_multiprofile.simulate(config))
-                results["SDO"].append(
-                    server_double.simulate(config))
+                for strategy in STRATEGIES:
+                    config["strategy"] = strategy
+                    results[strategy].append(simulator.simulate(config))
 
             results_file = os.path.join(
                 OUTPUT_DIR,

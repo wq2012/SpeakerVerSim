@@ -1,13 +1,15 @@
+"""Batch script to visualize experimental results reported in the paper."""
 import seaborn as sns
 import pickle
 import os
 from typing import Callable
 import matplotlib.pyplot as plt
 
+from SpeakerVerSim.common import STRATEGIES
+
 NUM_RUNS = 100
 NUM_USERS = [1, 100, 1000]
 NUM_WORKERS = [10, 100, 500]
-STRATEGIES = ["SSO", "SSO-sync", "SSO-hash", "SSO-mul", "SDO"]
 STATS_DIR = "result_stats"
 OUTPUT_DIR = "figures"
 

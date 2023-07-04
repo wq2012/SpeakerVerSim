@@ -9,6 +9,7 @@ import random
 
 
 EPS = 1e-10
+STRATEGIES = ["SSO", "SSO-sync", "SSO-hash", "SSO-mul", "SDO"]
 
 
 @dataclasses.dataclass

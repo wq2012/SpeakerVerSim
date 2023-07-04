@@ -1,3 +1,7 @@
+# Which strategy to simulate.
+# Available options: ["SSO", "SSO-sync", "SSO-hash", "SSO-mul", "SDO"]
+strategy: "SSO"
+
 # Verbosily of logging. Larger is more verbose.
 log_verbosity: 2
 

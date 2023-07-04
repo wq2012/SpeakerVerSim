@@ -11,9 +11,10 @@ import random
 import dataclasses
 from typing import Generator, Optional, Any
 
-from common import (Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
-                    GlobalStats)
-import server_single_simple
+from SpeakerVerSim.common import (
+    Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
+    GlobalStats)
+from SpeakerVerSim import server_single_simple
 
 
 @dataclasses.dataclass
@@ -128,6 +129,8 @@ class VersionSyncWorker(server_single_simple.SingleVersionWorker):
 
 def simulate(config: dict[str, Any]) -> GlobalStats:
     """Run simulation."""
+    if config["strategy"] != "SSO-sync":
+        raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)
     client = server_single_simple.SimpleClient(env, "client", config, stats)
