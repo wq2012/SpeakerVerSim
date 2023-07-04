@@ -1,4 +1,4 @@
-# SpeakerVersionSim [![Python application](https://github.com/wq2012/SpeakerVersionSim/actions/workflows/python-app.yml/badge.svg)](https://github.com/wq2012/SpeakerVersionSim/actions/workflows/python-app.yml)
+# SpeakerVerSim [![Python application](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml/badge.svg)](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml)
 
 Simulation experiments of version control strategies for speaker recognition systems.
 
