@@ -4,7 +4,7 @@ import yaml
 from tqdm import trange
 import os
 
-from SpeakerVerSim import simulator, STRATEGIES
+from SpeakerVerSim import simulate, STRATEGIES
 
 
 NUM_RUNS = 100
@@ -42,7 +42,7 @@ def main():
             for _ in trange(NUM_RUNS):
                 for strategy in STRATEGIES:
                     config["strategy"] = strategy
-                    results[strategy].append(simulator.simulate(config))
+                    results[strategy].append(simulate(config))
 
             results_file = os.path.join(
                 OUTPUT_DIR,

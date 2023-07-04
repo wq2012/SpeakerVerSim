@@ -6,7 +6,7 @@ from SpeakerVerSim import server_single_sync
 from SpeakerVerSim import server_single_hash
 from SpeakerVerSim import server_single_multiprofile
 from SpeakerVerSim import server_double
-from SpeakerVerSim import simulator
+from SpeakerVerSim import simulate
 
 
 class TestServerSimulation(unittest.TestCase):
@@ -61,31 +61,31 @@ class TestSimulatorAPI(unittest.TestCase):
 
     def test_simulator_SSO(self):
         self.config["strategy"] = "SSO"
-        stats = simulator.simulate(self.config)
+        stats = simulate(self.config)
         assert len(stats.final_messages) == 1080
 
     def test_simulator_SSO_sync(self):
         self.config["strategy"] = "SSO-sync"
-        stats = simulator.simulate(self.config)
+        stats = simulate(self.config)
         assert len(stats.final_messages) == 1080
 
     def test_simulator_SSO_hash(self):
         self.config["strategy"] = "SSO-hash"
-        stats = simulator.simulate(self.config)
+        stats = simulate(self.config)
         assert len(stats.final_messages) == 1080
         assert stats.backward_bounce_count == 0
         assert stats.forward_bounce_count in {0, 1}
 
     def test_simulator_SSO_mul(self):
         self.config["strategy"] = "SSO-mul"
-        stats = simulator.simulate(self.config)
+        stats = simulate(self.config)
         assert len(stats.final_messages) == 1080
         assert stats.backward_bounce_count == 0
         assert stats.forward_bounce_count in {0, 1}
 
     def test_simulator_SDO(self):
         self.config["strategy"] = "SDO"
-        stats = simulator.simulate(self.config)
+        stats = simulate(self.config)
         assert len(stats.final_messages) == 1080
         assert stats.backward_bounce_count == 0
         assert stats.forward_bounce_count == 0
@@ -93,7 +93,7 @@ class TestSimulatorAPI(unittest.TestCase):
     def test_bad_strategy(self):
         self.config["strategy"] = ""
         with self.assertRaises(ValueError):
-            simulator.simulate(self.config)
+            simulate(self.config)
 
 
 if __name__ == "__main__":
