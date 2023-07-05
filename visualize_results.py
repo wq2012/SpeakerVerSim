@@ -99,7 +99,7 @@ def visualize_workload(
     with open(results_file, "rb") as f:
         results = pickle.load(f)
 
-    _, axes = plt.subplots(len(STRATEGIES), 1, figsize=(10, 20))
+    _, axes = plt.subplots(len(STRATEGIES), 1, figsize=(15, 20))
     for row, strategy in enumerate(STRATEGIES):
         stats = results[strategy][0]
         x = []
