@@ -1,3 +1,4 @@
+"""The simulator API to simplify calling different strategies."""
 from SpeakerVerSim.common import GlobalStats
 from SpeakerVerSim import server_single_simple
 from SpeakerVerSim import server_single_sync

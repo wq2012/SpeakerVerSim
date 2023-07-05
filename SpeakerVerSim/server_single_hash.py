@@ -5,8 +5,6 @@ on the hash value of the user’s ID, such that requests for each
 user are always dispatched to the same cloud computing server.
 """
 import simpy
-import sys
-import yaml
 from typing import Any
 
 from SpeakerVerSim.common import (
@@ -48,18 +46,3 @@ def simulate(config: dict[str, Any]) -> GlobalStats:
 
     env.run(until=config["time_to_run"])
     return netsys.aggregate_metrics()
-
-
-if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        # Default config file.
-        config_file = "example_config.yml"
-    elif len(sys.argv) == 2:
-        config_file = len(sys.argv[1])
-    else:
-        raise ValueError("Expecting at most one config file.")
-
-    with open(config_file, "r") as f:
-        config = yaml.safe_load(f)
-
-    simulate(config)
