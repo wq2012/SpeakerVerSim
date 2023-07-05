@@ -18,7 +18,7 @@ time_to_run: 10800
 # Latency between client and frontend server.
 # Typical audio length: 5s
 # Typical sample rate: 16kHz
-# Typical sample site: 16 bits
+# Typical sample size: 16 bits
 # Thus typical audio total bits: 5 * 16000 * 16 = 1280000
 # Typical 4G bandwidth: 5Mbps
 # Thus latency: 1280000 / 5M = 0.244 (s)
