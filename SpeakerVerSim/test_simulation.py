@@ -19,33 +19,33 @@ class TestServerSimulation(unittest.TestCase):
     def test_server_single_simple(self):
         self.config["strategy"] = "SSO"
         stats = server_single_simple.simulate(self.config)
-        assert len(stats.final_messages) == 1080
+        self.assertEqual(len(stats.final_messages), 1080)
 
     def test_server_single_sync(self):
         self.config["strategy"] = "SSO-sync"
         stats = server_single_sync.simulate(self.config)
-        assert len(stats.final_messages) == 1080
+        self.assertEqual(len(stats.final_messages), 1080)
 
     def test_server_single_hash(self):
         self.config["strategy"] = "SSO-hash"
         stats = server_single_hash.simulate(self.config)
-        assert len(stats.final_messages) == 1080
-        assert stats.backward_bounce_count == 0
-        assert stats.forward_bounce_count in {0, 1}
+        self.assertEqual(len(stats.final_messages), 1080)
+        self.assertEqual(stats.backward_bounce_count, 0)
+        self.assertIn(stats.forward_bounce_count, {0, 1})
 
     def test_server_single_multiprofile(self):
         self.config["strategy"] = "SSO-mul"
         stats = server_single_multiprofile.simulate(self.config)
-        assert len(stats.final_messages) == 1080
-        assert stats.backward_bounce_count == 0
-        assert stats.forward_bounce_count in {0, 1}
+        self.assertEqual(len(stats.final_messages), 1080)
+        self.assertEqual(stats.backward_bounce_count, 0)
+        self.assertIn(stats.forward_bounce_count, {0, 1})
 
     def test_server_double(self):
         self.config["strategy"] = "SD"
         stats = server_double.simulate(self.config)
-        assert len(stats.final_messages) == 1080
-        assert stats.backward_bounce_count == 0
-        assert stats.forward_bounce_count == 0
+        self.assertEqual(len(stats.final_messages), 1080)
+        self.assertEqual(stats.backward_bounce_count, 0)
+        self.assertEqual(stats.forward_bounce_count, 0)
 
     def test_bad_strategy(self):
         with self.assertRaises(ValueError):
@@ -62,33 +62,33 @@ class TestSimulatorAPI(unittest.TestCase):
     def test_simulator_SSO(self):
         self.config["strategy"] = "SSO"
         stats = simulate(self.config)
-        assert len(stats.final_messages) == 1080
+        self.assertEqual(len(stats.final_messages), 1080)
 
     def test_simulator_SSO_sync(self):
         self.config["strategy"] = "SSO-sync"
         stats = simulate(self.config)
-        assert len(stats.final_messages) == 1080
+        self.assertEqual(len(stats.final_messages), 1080)
 
     def test_simulator_SSO_hash(self):
         self.config["strategy"] = "SSO-hash"
         stats = simulate(self.config)
-        assert len(stats.final_messages) == 1080
-        assert stats.backward_bounce_count == 0
-        assert stats.forward_bounce_count in {0, 1}
+        self.assertEqual(len(stats.final_messages), 1080)
+        self.assertEqual(stats.backward_bounce_count, 0)
+        self.assertIn(stats.forward_bounce_count, {0, 1})
 
     def test_simulator_SSO_mul(self):
         self.config["strategy"] = "SSO-mul"
         stats = simulate(self.config)
-        assert len(stats.final_messages) == 1080
-        assert stats.backward_bounce_count == 0
-        assert stats.forward_bounce_count in {0, 1}
+        self.assertEqual(len(stats.final_messages), 1080)
+        self.assertEqual(stats.backward_bounce_count, 0)
+        self.assertIn(stats.forward_bounce_count, {0, 1})
 
     def test_simulator_SD(self):
         self.config["strategy"] = "SD"
         stats = simulate(self.config)
-        assert len(stats.final_messages) == 1080
-        assert stats.backward_bounce_count == 0
-        assert stats.forward_bounce_count == 0
+        self.assertEqual(len(stats.final_messages), 1080)
+        self.assertEqual(stats.backward_bounce_count, 0)
+        self.assertEqual(stats.forward_bounce_count, 0)
 
     def test_bad_strategy(self):
         self.config["strategy"] = ""
