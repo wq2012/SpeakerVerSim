@@ -9,11 +9,11 @@ def main():
         prog="run_simulator",
         description="Run a single simulation.")
 
-    parser.add_argument("-c", "--config_file", default="example_config.yml")
+    parser.add_argument("-c", "--config", default="example_config.yml")
     parser.add_argument("-s", "--strategy", choices=SpeakerVerSim.STRATEGIES)
     args = parser.parse_args()
 
-    with open(args.config_file, "r") as f:
+    with open(args.config, "r") as f:
         config = yaml.safe_load(f)
 
     if args.strategy:

@@ -1,8 +1,52 @@
 # SpeakerVerSim [![Python application](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml/badge.svg)](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml)
 
+
+## Overview
 SpeakerVerSim is an easily-extensible Python-based simulation framework for different version control strategies of speaker recognition systems under different network configurations.
 
 These simulations are used in the paper [Version Control of Speaker Recognition Systems](https://arxiv.org/abs/2007.12069).
+
+## How to use
+
+### Run one simulation
+
+You can easily start a simulation by running:
+
+```
+python run_simulator.py
+```
+
+This simulation will use the configurations in the `example_config.yml` file.
+
+To use a different configuration file, you can use the `-c` or `--config` flag. For example:
+
+```
+python run_simulator.py --config my_config.yml
+```
+
+You can also override the strategy to be simulated from the config file using the `-s` or `--strategy` flag. For example:
+
+```
+python run_simulator.py -c my_config.yml -s SSO-sync
+```
+
+### Reproduce experiments
+
+You can easily reproduce the experiments in our [paper](https://arxiv.org/abs/2007.12069) by running:
+
+```
+python run_exp.py
+```
+
+After running this script, simulation results will be stored in the `result_stats` directory.
+
+Then you can visualize the metrics by running:
+
+```
+python visualize_results.py
+```
+
+The visualization graphics will be stored in the `figures` directory.
 
 ## List of implemented strategies
 
