@@ -20,11 +20,15 @@ class TestServerSimulation(unittest.TestCase):
         self.config["strategy"] = "SSO"
         stats = server_single_simple.simulate(self.config)
         self.assertEqual(len(stats.final_messages), 1080)
+        self.assertGreater(stats.backward_bounce_count, 1)
+        self.assertGreater(stats.forward_bounce_count, 1)
 
     def test_server_single_sync(self):
         self.config["strategy"] = "SSO-sync"
         stats = server_single_sync.simulate(self.config)
         self.assertEqual(len(stats.final_messages), 1080)
+        self.assertGreater(stats.backward_bounce_count, 1)
+        self.assertGreater(stats.forward_bounce_count, 1)
 
     def test_server_single_hash(self):
         self.config["strategy"] = "SSO-hash"
@@ -63,11 +67,15 @@ class TestSimulatorAPI(unittest.TestCase):
         self.config["strategy"] = "SSO"
         stats = simulate(self.config)
         self.assertEqual(len(stats.final_messages), 1080)
+        self.assertGreater(stats.backward_bounce_count, 1)
+        self.assertGreater(stats.forward_bounce_count, 1)
 
     def test_simulator_SSO_sync(self):
         self.config["strategy"] = "SSO-sync"
         stats = simulate(self.config)
         self.assertEqual(len(stats.final_messages), 1080)
+        self.assertGreater(stats.backward_bounce_count, 1)
+        self.assertGreater(stats.forward_bounce_count, 1)
 
     def test_simulator_SSO_hash(self):
         self.config["strategy"] = "SSO-hash"
