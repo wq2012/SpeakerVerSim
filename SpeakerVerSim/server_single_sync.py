@@ -64,7 +64,7 @@ class VersionSyncFrontend(server_single_simple.ForegroundReenrollFrontend):
             # Note: updated_workers can be empty, if the worker has updated,
             # but has not sync'ed with frontend yet.
             if len(updated_workers) > 0:
-                return random.choice(self.workers)
+                return random.choice(updated_workers)
         return worker
 
     def send_version_queries(self) -> Generator:
