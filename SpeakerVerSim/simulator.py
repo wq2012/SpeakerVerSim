@@ -19,7 +19,7 @@ def simulate(config: dict[str, Any]) -> GlobalStats:
         return server_single_hash.simulate(config)
     elif strategy == "SSO-mul":
         return server_single_multiprofile.simulate(config)
-    elif strategy == "SDO":
+    elif strategy == "SD":
         return server_double.simulate(config)
     else:
         raise ValueError(f"Strategy not supported: {strategy}")

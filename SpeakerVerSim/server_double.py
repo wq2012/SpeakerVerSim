@@ -1,4 +1,4 @@
-"""Basic server-side double version online strategy (SDO)."""
+"""Basic server-side double version strategy (SD)."""
 import simpy
 import yaml
 import random
@@ -145,7 +145,7 @@ class DoubleVersionNetworkSystem(NetworkSystem):
 
 def simulate(config: dict[str, Any]) -> GlobalStats:
     """Run simulation."""
-    if config["strategy"] != "SDO":
+    if config["strategy"] != "SD":
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

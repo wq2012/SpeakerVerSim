@@ -12,7 +12,7 @@ These simulations are used in the paper [Version Control of Speaker Recognition 
 | `server_single_sync.py`         | SSO-sync    | Server-side single version online updating strategy with frontend-worker version sync.
 | `server_single_hash.py`         | SSO-hash    | Server-side single version online updating strategy with user-ID hashing.
 | `server_single_multiprofile.py` | SSO-mul     | Server-side single version online updating strategy with multi-profile database.
-| `server_single_sync.py`         | SDO         | Server-side double version updating strategy.
+| `server_single_sync.py`         | SD          | Server-side double version updating strategy.
 
 ## Citation
 

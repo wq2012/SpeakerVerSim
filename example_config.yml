@@ -1,5 +1,5 @@
 # Which strategy to simulate.
-# Available options: ["SSO", "SSO-sync", "SSO-hash", "SSO-mul", "SDO"]
+# Available options: ["SSO", "SSO-sync", "SSO-hash", "SSO-mul", "SD"]
 strategy: "SSO"
 
 # Verbosily of logging. Larger is more verbose.

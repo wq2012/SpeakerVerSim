@@ -41,7 +41,7 @@ class TestServerSimulation(unittest.TestCase):
         assert stats.forward_bounce_count in {0, 1}
 
     def test_server_double(self):
-        self.config["strategy"] = "SDO"
+        self.config["strategy"] = "SD"
         stats = server_double.simulate(self.config)
         assert len(stats.final_messages) == 1080
         assert stats.backward_bounce_count == 0
@@ -83,8 +83,8 @@ class TestSimulatorAPI(unittest.TestCase):
         assert stats.backward_bounce_count == 0
         assert stats.forward_bounce_count in {0, 1}
 
-    def test_simulator_SDO(self):
-        self.config["strategy"] = "SDO"
+    def test_simulator_SD(self):
+        self.config["strategy"] = "SD"
         stats = simulate(self.config)
         assert len(stats.final_messages) == 1080
         assert stats.backward_bounce_count == 0
