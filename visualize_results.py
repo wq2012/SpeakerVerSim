@@ -126,6 +126,35 @@ def visualize_workload(
     plt.close()
 
 
+def visualize_sso_sync_sweep_interval(
+        num_users: int,
+        label: str,
+        figure_name: str,
+        get_metrics: Callable):
+    """Visualize SSO-sync metrics for sweeping the version_query_interval."""
+    x = []
+    y = []
+    for num_workers in [10]:
+        results_file = os.path.join(
+            STATS_DIR,
+            "results_{}workers_{}users_{}runs_sweep_interval.pickle".format(
+                num_workers, num_users, NUM_RUNS))
+        with open(results_file, "rb") as f:
+            results = pickle.load(f)
+
+        for interval in [1, 10, 30, 60, 300, 600, 1800, 3600]:
+            for run in range(NUM_RUNS):
+                stats = results[interval][run]
+                x.append(interval)
+                y.append(get_metrics(stats))
+    ax = sns.boxplot(x=x, y=y)
+    ax.set_xlabel("Version query interval")
+    ax.set_ylabel(label)
+    plt.tight_layout()
+    plt.savefig(os.path.join("figures", figure_name))
+    plt.close()
+
+
 def main():
     # Create output dir.
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -189,6 +218,14 @@ def main():
         num_users=100,
         num_workers=10,
         figure_name="workload_10workers_100users.png",
+    )
+
+    # SSO-sync sweep interval.
+    visualize_sso_sync_sweep_interval(
+        num_users=1,
+        label="Average end-to-end latency",
+        figure_name="average_e2e_latency_sweep_interval.png",
+        get_metrics=lambda x: x.average_e2e_latency,
     )
 
 
