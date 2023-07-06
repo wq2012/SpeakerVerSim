@@ -6,11 +6,28 @@ from SpeakerVerSim import server_single_hash
 from SpeakerVerSim import server_single_multiprofile
 from SpeakerVerSim import server_double
 
-from typing import Any
+from typing import Any, Union
+import yaml
 
 
-def simulate(config: dict[str, Any]) -> GlobalStats:
-    """Main simulation function of this module."""
+def simulate(config: Union[str, dict[str, Any]]) -> GlobalStats:
+    """Main simulation function of this module.
+
+    Args:
+        config: either the path to a YAML file, or a dict
+
+    Returns:
+        stats from the simulation
+
+    Raises:
+        ValueError: if the strategy in the config is unsupported
+    """
+
+    if isinstance(config, str):
+        config_file = config
+        with open(config_file, "r") as f:
+            config = yaml.safe_load(f)
+
     strategy = config["strategy"]
     if strategy == "SSO":
         return server_single_simple.simulate(config)

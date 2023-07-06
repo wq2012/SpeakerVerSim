@@ -101,6 +101,13 @@ class TestSimulatorAPI(unittest.TestCase):
         with self.assertRaises(ValueError):
             simulate(self.config)
 
+    def test_simulator_file_input(self):
+        config_file = "example_config.yml"
+        stats = simulate(config_file)
+        self.assertEqual(len(stats.final_messages), 1080)
+        self.assertGreater(stats.backward_bounce_count, 1)
+        self.assertGreater(stats.forward_bounce_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
