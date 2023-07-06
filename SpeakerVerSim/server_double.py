@@ -136,7 +136,7 @@ class DoubleVersionNetworkSystem(NetworkSystem):
     But each worker has two model versions.
     """
 
-    def set_worker_model_version(self, workers: list[BaseWorker]):
+    def set_worker_model_version(self):
         for worker in self.workers:
             worker.set_model_versions([1, 2])
 
@@ -160,6 +160,4 @@ def simulate(config: dict[str, Any]) -> GlobalStats:
         frontend,
         workers,
         database)
-
-    env.run(until=config["time_to_run"])
-    return netsys.aggregate_metrics()
+    return netsys.simulate()

@@ -43,6 +43,4 @@ def simulate(config: dict[str, Any]) -> GlobalStats:
         frontend,
         workers,
         database)
-
-    env.run(until=config["time_to_run"])
-    return netsys.aggregate_metrics()
+    return netsys.simulate()

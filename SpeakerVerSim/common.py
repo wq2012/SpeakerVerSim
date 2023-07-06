@@ -354,7 +354,7 @@ class NetworkSystem:
         self.config = self.client.config
 
         # Set worker model version.
-        self.set_worker_model_version(self.workers)
+        self.set_worker_model_version()
 
         # Build connections.
         self.client.set_frontend(self.frontend)
@@ -370,8 +370,8 @@ class NetworkSystem:
         for worker in self.workers:
             worker.setup()
 
-    def set_worker_model_version(self, workers: list[BaseWorker]):
-        for worker in workers:
+    def set_worker_model_version(self):
+        for worker in self.workers:
             worker.set_model_version(1)
 
     def aggregate_metrics(self) -> GlobalStats:
@@ -399,3 +399,8 @@ class NetworkSystem:
             print(stats_short)
 
         return stats
+
+    def simulate(self) -> GlobalStats:
+        """Run simulation."""
+        self.env.run(until=self.config["time_to_run"])
+        return self.aggregate_metrics()
