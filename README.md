@@ -1,4 +1,4 @@
-# SpeakerVerSim [![Python application](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml/badge.svg)](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml)
+# SpeakerVerSim [![Python application](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml/badge.svg)](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml) [![PyPI Version](https://img.shields.io/pypi/v/SpeakerVerSim.svg)](https://pypi.python.org/pypi/SpeakerVerSim) [![Python Versions](https://img.shields.io/pypi/pyversions/SpeakerVerSim.svg)](https://pypi.org/project/SpeakerVerSim) [![Downloads](https://pepy.tech/badge/SpeakerVerSim)](https://pepy.tech/project/SpeakerVerSim)
 
 
 ## Overview
