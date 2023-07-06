@@ -134,7 +134,8 @@ def visualize_sso_sync_sweep_interval(
     """Visualize SSO-sync metrics for sweeping the version_query_interval."""
     x = []
     y = []
-    for num_workers in [10]:
+    hue = []
+    for num_workers in NUM_WORKERS:
         results_file = os.path.join(
             STATS_DIR,
             "results_{}workers_{}users_{}runs_sweep_interval.pickle".format(
@@ -147,7 +148,9 @@ def visualize_sso_sync_sweep_interval(
                 stats = results[interval][run]
                 x.append(interval)
                 y.append(get_metrics(stats))
-    ax = sns.boxplot(x=x, y=y)
+                hue.append(num_workers)
+    ax = sns.boxplot(x=x, y=y, hue=hue)
+    ax.legend(title="Number of workers")
     ax.set_xlabel("Version query interval")
     ax.set_ylabel(label)
     plt.tight_layout()
