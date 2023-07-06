@@ -8,6 +8,14 @@ These simulations are used in the paper [Version Control of Speaker Recognition 
 
 ## How to use
 
+### Install
+
+The `SpeakerVerSim` library can be installed with:
+
+```
+pip install SpeakerVerSim
+```
+
 ### Run one simulation
 
 You can easily start a simulation by running:
