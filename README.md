@@ -58,6 +58,20 @@ The visualization graphics will be stored in the `figures` directory.
 | `server_single_multiprofile.py` | SSO-mul     | Server-side single version online updating strategy with multi-profile database.
 | `server_single_sync.py`         | SD          | Server-side double version updating strategy.
 
+## Design
+
+The design of this library is summarized as below:
+
+* This library is built on top of [SimPy](https://simpy.readthedocs.io), a process-based discrete-event simulation (DES) framework based on standard Python.
+* All configurations of the simulation are represented in a single YAML file. `example_config.yml` has explanations for all the configuration fields.
+* Each machine in the network inherits from the `Actor` class, including the client, the frontend server, and cloud worker, and the database.
+* All clients inherit from the `BaseClient` class; all frontend servers inherit from the `BaseFrontend` class; all cloud workers inherit from the `BaseWorker` class; and all databases inherit from the `BaseDatabase` class.
+* The communication between two machines happens like this: the sender creates a `Message` object, and adds it to the receiver's message pool, which is a `simpy.Store` object.
+* During the simulation, metrics are logged in an object of the `GlobalStats` class.
+* The entire network system is represented by the `NetworkSystem` class or its subclass.
+
+Each version control strategy is implemented by creating a set of client, frontend server, cloud workers, database, and defining how they interact with each other.
+
 ## Citation
 
 ```
