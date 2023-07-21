@@ -1,3 +1,4 @@
+---
 # Which strategy to simulate.
 # Available options: ["SSO", "SSO-sync", "SSO-hash", "SSO-mul", "SD"]
 strategy: "SSO"
