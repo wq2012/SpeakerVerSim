@@ -41,7 +41,7 @@ python run_simulator.py -c my_config.yml -s SSO-sync
 ### Call the API
 
 The highest level API is the `SpeakerVerSim.simulate` function.
-It takes either the path to the config file or a dictionary of the configurations as its input, and outputs the simulation stats.
+It takes either the path to the config file or an object of the configurations as its input, and outputs the simulation stats.
 
 Example usage:
 

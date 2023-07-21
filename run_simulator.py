@@ -2,6 +2,7 @@
 import SpeakerVerSim
 import argparse
 import yaml
+import munch
 
 
 def main():
@@ -14,10 +15,10 @@ def main():
     args = parser.parse_args()
 
     with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
+        config = munch.Munch.fromDict(yaml.safe_load(f))
 
     if args.strategy:
-        config["strategy"] = args.strategy
+        config.strategy = args.strategy
 
     SpeakerVerSim.simulate(config)
 

@@ -6,15 +6,16 @@ from SpeakerVerSim import server_single_hash
 from SpeakerVerSim import server_single_multiprofile
 from SpeakerVerSim import server_double
 
-from typing import Any, Union
+from typing import Union
 import yaml
+import munch
 
 
-def simulate(config: Union[str, dict[str, Any]]) -> GlobalStats:
+def simulate(config: Union[str, munch.Munch]) -> GlobalStats:
     """Main simulation function of this module.
 
     Args:
-        config: either the path to a YAML file, or a dict
+        config: either the path to a YAML file, or a Munch
 
     Returns:
         stats from the simulation
@@ -26,9 +27,9 @@ def simulate(config: Union[str, dict[str, Any]]) -> GlobalStats:
     if isinstance(config, str):
         config_file = config
         with open(config_file, "r") as f:
-            config = yaml.safe_load(f)
+            config = munch.Munch.fromDict(yaml.safe_load(f))
 
-    strategy = config["strategy"]
+    strategy = config.strategy
     if strategy == "SSO":
         return server_single_simple.simulate(config)
     elif strategy == "SSO-sync":

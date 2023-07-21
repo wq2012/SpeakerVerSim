@@ -5,7 +5,7 @@ on the hash value of the user’s ID, such that requests for each
 user are always dispatched to the same cloud computing server.
 """
 import simpy
-from typing import Any
+import munch
 
 from SpeakerVerSim.common import (
     Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
@@ -23,9 +23,9 @@ class UserHashFrontend(server_single_simple.ForegroundReenrollFrontend):
         return self.workers[user_hash]
 
 
-def simulate(config: dict[str, Any]) -> GlobalStats:
+def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config["strategy"] != "SSO-hash":
+    if config.strategy != "SSO-hash":
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

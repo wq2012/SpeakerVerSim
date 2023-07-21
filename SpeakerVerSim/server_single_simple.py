@@ -1,8 +1,9 @@
 """Basic server-side single version online strategy (SSO)."""
 import simpy
 import random
-from typing import Generator, Any
+from typing import Generator
 import sys
+import munch
 
 from SpeakerVerSim.common import (
     Message, BaseClient, BaseFrontend, BaseWorker,
@@ -28,29 +29,29 @@ class SimpleClient(BaseClient):
     def get_user_id(self) -> int:
         """Get the user_id of the initial request.
 
-        Total number of users is self.config["num_users"].
+        Total number of users is self.config.num_users.
 
         Different users send requests with different frequency, depending
-        on self.config["user_distribution"].
+        on self.config.user_distribution.
         """
-        user_ids = list(range(self.config["num_users"]))
-        if self.config["user_distribution"] == "uniform":
+        user_ids = list(range(self.config.num_users))
+        if self.config.user_distribution == "uniform":
             user_weights = [1 for _ in user_ids]
-        elif self.config["user_distribution"] == "linear":
+        elif self.config.user_distribution == "linear":
             user_weights = [x + 1 for x in user_ids]
-        elif self.config["user_distribution"] == "exponential":
+        elif self.config.user_distribution == "exponential":
             user_weights = [0.8**x for x in user_ids]
         else:
             raise ValueError(
                 "Unsupported user_distribution: {}".format(
-                    self.config["user_distribution"]))
+                    self.config.user_distribution))
         return random.choices(user_ids, weights=user_weights, k=1)[0]
 
     def send_frontend_requests(self) -> Generator:
         """Keep sending requests to frontend with intervals."""
         while True:
             self.env.process(self.send_one_frontend_request())
-            yield self.env.timeout(self.config["client_request_interval"])
+            yield self.env.timeout(self.config.client_request_interval)
 
     def send_one_frontend_request(self) -> Generator:
         """Send one request to frontend."""
@@ -167,15 +168,15 @@ class SingleVersionWorker(BaseWorker):
     def update_version(self) -> Generator:
         """Update the model to a new version."""
         update_time = random.expovariate(
-            1.0 / self.config["worker_update_mean_time"])
+            1.0 / self.config.worker_update_mean_time)
         yield self.env.timeout(update_time)
         self.version += 1
         self.log("update model version")
 
 
-def simulate(config: dict[str, Any]) -> GlobalStats:
+def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config["strategy"] != "SSO":
+    if config.strategy != "SSO":
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)
@@ -183,7 +184,7 @@ def simulate(config: dict[str, Any]) -> GlobalStats:
     frontend = ForegroundReenrollFrontend(env, "frontend", config, stats)
     workers = [
         SingleVersionWorker(env, f"worker-{i}", config, stats)
-        for i in range(config["num_cloud_workers"])]
+        for i in range(config.num_cloud_workers)]
     database = SingleVersionDatabase(env, "database", config, stats)
     database.create(init_version=1)
     netsys = NetworkSystem(

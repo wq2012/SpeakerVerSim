@@ -6,7 +6,8 @@ Once the re-enrollment for a user has completed, we will store both
 the old version and the new version of this user's profile.
 """
 import simpy
-from typing import Generator, Any
+from typing import Generator
+import munch
 
 from SpeakerVerSim.common import (
     Message, NetworkSystem, MultiVersionDatabase,
@@ -52,9 +53,9 @@ class MultiProfileFrontend(server_single_simple.ForegroundReenrollFrontend):
         yield from self.send_to_worker(worker, msg)
 
 
-def simulate(config: dict[str, Any]) -> GlobalStats:
+def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config["strategy"] != "SSO-mul":
+    if config.strategy != "SSO-mul":
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

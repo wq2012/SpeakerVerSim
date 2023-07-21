@@ -6,6 +6,7 @@ from typing import Optional, Generator, Any
 import dataclasses
 import abc
 import random
+import munch
 
 
 EPS = 1e-10
@@ -79,7 +80,7 @@ class GlobalStats:
     max_total_flops: float = 0
 
     # Configuration of the experiment.
-    config: dict[str, Any] = dataclasses.field(default_factory=dict)
+    config: munch.Munch = dataclasses.field(default_factory=munch.Munch)
 
     # Length of final_messages.
     total_num_messages: int = 0
@@ -100,7 +101,7 @@ class Actor(abc.ABC):
             self,
             env: simpy.Environment,
             name: str,
-            config: dict[str, Any],
+            config: munch.Munch,
             stats: GlobalStats):
         self.env = env
         self.name = name
@@ -123,7 +124,7 @@ class Actor(abc.ABC):
             1: warning
             2: info
         """
-        if verbosity <= self.config["log_verbosity"]:
+        if verbosity <= self.config.log_verbosity:
             timestamp = f"[{self.env.now:.5f}]"
             name = f"[{self.name}]"
             print(timestamp, name, text)
@@ -160,7 +161,7 @@ class BaseClient(Actor):
         self.log("send request")
         msg.client_send_time = self.env.now
         # Simulate network latency.
-        yield self.get_latency(self.config["client_frontend_latency"])
+        yield self.get_latency(self.config.client_frontend_latency)
         self.frontend.message_pool.put(msg)
 
 
@@ -191,7 +192,7 @@ class BaseFrontend(Actor):
         else:
             msg.frontend_send_worker_time = self.env.now
         # Simulate network latency.
-        yield self.get_latency(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config.frontend_worker_latency)
         worker.message_pool.put(msg)
 
     def send_to_client(self, msg: Message) -> Generator:
@@ -199,7 +200,7 @@ class BaseFrontend(Actor):
         self.log("send response")
         msg.frontend_return_time = self.env.now
         # Simulate network latency.
-        yield self.get_latency(self.config["client_frontend_latency"])
+        yield self.get_latency(self.config.client_frontend_latency)
         self.client.message_pool.put(msg)
 
 
@@ -227,21 +228,21 @@ class BaseWorker(Actor):
         self.log("send response")
         msg.worker_return_time = self.env.now
         # Simulate network latency.
-        yield self.get_latency(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config.frontend_worker_latency)
         self.frontend.message_pool.put(msg)
 
     def run_inference(self, msg: Message) -> Generator:
         """Run inference of speech engine. Simulates latency."""
         self.log("run inference")
         # Simulate computation latency.
-        yield self.get_latency(self.config["worker_inference_latency"])
-        msg.total_flops += self.config["flops_per_inference"]
+        yield self.get_latency(self.config.worker_inference_latency)
+        msg.total_flops += self.config.flops_per_inference
 
         # Add to stats.
         if self.name not in self.stats.workload:
             self.stats.workload[self.name] = []
         self.stats.workload[self.name].append(
-            (self.env.now, self.config["flops_per_inference"]))
+            (self.env.now, self.config.flops_per_inference))
 
 
 class SingleVersionDatabase(BaseDatabase):
@@ -254,7 +255,7 @@ class SingleVersionDatabase(BaseDatabase):
     def create(self, init_version: int) -> None:
         """Add initial version for all users."""
         self.data = {}
-        for user_id in range(self.config["num_users"]):
+        for user_id in range(self.config.num_users):
             self.data[user_id] = init_version
 
     def fetch_profile(self, msg: Message) -> Generator:
@@ -264,7 +265,7 @@ class SingleVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
-        yield self.get_latency(self.config["database_read_latency"])
+        yield self.get_latency(self.config.database_read_latency)
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
 
@@ -277,7 +278,7 @@ class SingleVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
-        yield self.get_latency(self.config["database_write_latency"])
+        yield self.get_latency(self.config.database_write_latency)
         self.data[msg.user_id] = msg.profile_version
 
 
@@ -291,7 +292,7 @@ class MultiVersionDatabase(BaseDatabase):
     def create(self, init_versions: list[int]) -> None:
         """Add initial versions for all users."""
         self.data = {}
-        for user_id in range(self.config["num_users"]):
+        for user_id in range(self.config.num_users):
             self.data[user_id] = init_versions
 
     def fetch_profile(self, msg: Message) -> Generator:
@@ -301,7 +302,7 @@ class MultiVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot fetch profile with enrollment request.")
         msg.fetch_database_time = self.env.now
-        yield self.get_latency(self.config["database_read_latency"])
+        yield self.get_latency(self.config.database_read_latency)
         if msg.user_id not in self.data:
             raise ValueError(f"Missing profile for user {msg.user_id}")
 
@@ -314,7 +315,7 @@ class MultiVersionDatabase(BaseDatabase):
         if msg.is_enroll:
             raise ValueError("Cannot update profile with enrollment request.")
         msg.udpate_database_time = self.env.now
-        yield self.get_latency(self.config["database_write_latency"])
+        yield self.get_latency(self.config.database_write_latency)
         if msg.profile_version is not None:
             # From single version worker.
             if msg.profile_version not in self.data[msg.user_id]:
@@ -390,7 +391,7 @@ class NetworkSystem:
         stats.average_e2e_latency /= stats.total_num_messages
         stats.average_total_flops /= stats.total_num_messages
 
-        if self.config["print_stats"]:
+        if self.config.print_stats:
             print("========================================")
             print("Global stats:")
             stats_short = copy.deepcopy(stats)
@@ -402,5 +403,5 @@ class NetworkSystem:
 
     def simulate(self) -> GlobalStats:
         """Run simulation."""
-        self.env.run(until=self.config["time_to_run"])
+        self.env.run(until=self.config.time_to_run)
         return self.aggregate_metrics()

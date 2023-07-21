@@ -116,7 +116,7 @@ def visualize_workload(
 
         ax = sns.kdeplot(ax=axes[row], x=x,
                          weights=weights, hue=hue, bw_adjust=0.05,
-                         clip=[100, stats.config["time_to_run"]-100])
+                         clip=[100, stats.config.time_to_run-100])
         ax.set_title(strategy)
         ax.set(xticks=[], xlabel="")
         ax.set(yticks=[], ylabel="")

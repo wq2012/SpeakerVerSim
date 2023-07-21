@@ -1,8 +1,9 @@
 """Basic server-side double version strategy (SD)."""
 import simpy
 import random
-from typing import Generator, Any
+from typing import Generator
 import copy
+import munch
 
 from SpeakerVerSim.common import (
     Message, BaseFrontend, BaseWorker, NetworkSystem,
@@ -121,7 +122,7 @@ class DoubleVersionWorker(BaseWorker):
     def update_version(self) -> Generator:
         """Replace the oldest version (v1) by a new version (v3)."""
         update_time = random.expovariate(
-            1.0 / self.config["worker_update_mean_time"])
+            1.0 / self.config.worker_update_mean_time)
         yield self.env.timeout(update_time)
         # Delete oldest version.
         del self.versions[0]
@@ -141,9 +142,9 @@ class DoubleVersionNetworkSystem(NetworkSystem):
             worker.set_model_versions([1, 2])
 
 
-def simulate(config: dict[str, Any]) -> GlobalStats:
+def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config["strategy"] != "SD":
+    if config.strategy != "SD":
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

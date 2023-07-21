@@ -3,6 +3,7 @@ import pickle
 import yaml
 from tqdm import trange
 import os
+import munch
 
 from SpeakerVerSim import simulate
 
@@ -18,28 +19,28 @@ STRATEGY = "SSO-sync"
 def main():
     config_file = "example_config.yml"
     with open(config_file, "r") as f:
-        config = yaml.safe_load(f)
+        config = munch.Munch.fromDict(yaml.safe_load(f))
 
     # Less verbose logging.
-    config["log_verbosity"] = 0
-    config["print_stats"] = False
+    config.log_verbosity = 0
+    config.print_stats = False
 
-    config["num_users"] = NUM_USERS
-    config["strategy"] = STRATEGY
+    config.num_users = NUM_USERS
+    config.strategy = STRATEGY
 
     # Create output dir.
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     for num_workers in NUM_WORKERS:
         print(f"Simulation for {num_workers} workers...")
-        config["num_cloud_workers"] = num_workers
+        config.num_cloud_workers = num_workers
 
         # Initialize the results.
         results = {interval: [] for interval in QUERY_INTERVAL}
 
         for _ in trange(NUM_RUNS):
             for interval in QUERY_INTERVAL:
-                config["version_query_interval"] = interval
+                config.version_query_interval = interval
                 results[interval].append(simulate(config))
 
         results_file = os.path.join(

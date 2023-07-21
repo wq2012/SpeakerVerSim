@@ -7,7 +7,8 @@ current model version of each cloud computing server.
 import simpy
 import random
 import dataclasses
-from typing import Generator, Optional, Any
+from typing import Generator, Optional
+import munch
 
 from SpeakerVerSim.common import (
     Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
@@ -70,7 +71,7 @@ class VersionSyncFrontend(server_single_simple.ForegroundReenrollFrontend):
     def send_version_queries(self) -> Generator:
         """Send version queries to all workers at intervals."""
         while True:
-            yield self.env.timeout(self.config["version_query_interval"])
+            yield self.env.timeout(self.config.version_query_interval)
             for worker in self.workers:
                 self.env.process(self.send_one_version_query(worker))
 
@@ -78,7 +79,7 @@ class VersionSyncFrontend(server_single_simple.ForegroundReenrollFrontend):
         """Send one query to one worker."""
         query = VersionQuery()
         # Simulate network latency.
-        yield self.get_latency(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config.frontend_worker_latency)
         worker.query_pool.put(query)  # pytype: disable=attribute-error
 
     def handle_version_responses(self) -> Generator:
@@ -121,13 +122,13 @@ class VersionSyncWorker(server_single_simple.SingleVersionWorker):
             raise ValueError("Query received by worker must be request.")
 
         # Simulate network latency.
-        yield self.get_latency(self.config["frontend_worker_latency"])
+        yield self.get_latency(self.config.frontend_worker_latency)
         self.frontend.query_pool.put(query)  # pytype: disable=attribute-error
 
 
-def simulate(config: dict[str, Any]) -> GlobalStats:
+def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config["strategy"] != "SSO-sync":
+    if config.strategy != "SSO-sync":
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)
@@ -135,7 +136,7 @@ def simulate(config: dict[str, Any]) -> GlobalStats:
     frontend = VersionSyncFrontend(env, "frontend", config, stats)
     workers = [
         VersionSyncWorker(env, f"worker-{i}", config, stats)
-        for i in range(config["num_cloud_workers"])]
+        for i in range(config.num_cloud_workers)]
     database = SingleVersionDatabase(env, "database", config, stats)
     database.create(init_version=1)
     netsys = NetworkSystem(
