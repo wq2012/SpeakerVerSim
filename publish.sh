@@ -12,7 +12,7 @@ pushd ${PROJECT_PATH}
 # clean up
 rm -rf build
 rm -rf dist
-rm -rf spectralcluster.egg-info
+rm -rf SpeakerVerSim.egg-info
 
 # build and upload
 python setup.py sdist bdist_wheel
