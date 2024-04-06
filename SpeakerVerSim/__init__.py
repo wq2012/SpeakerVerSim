@@ -9,6 +9,7 @@ from . import server_double
 from . import simulator
 
 
+Strategy = common.Strategy
 Message = common.Message
 GlobalStats = common.GlobalStats
 Actor = common.Actor

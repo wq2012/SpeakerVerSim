@@ -11,7 +11,7 @@ from typing import Generator, Optional
 import munch
 
 from SpeakerVerSim.common import (
-    Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
+    Strategy, Message, BaseWorker, NetworkSystem, SingleVersionDatabase,
     GlobalStats)
 from SpeakerVerSim import server_single_simple
 
@@ -128,7 +128,7 @@ class VersionSyncWorker(server_single_simple.SingleVersionWorker):
 
 def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config.strategy != "SSO-sync":
+    if config.strategy != Strategy.SSO_SYNC:
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

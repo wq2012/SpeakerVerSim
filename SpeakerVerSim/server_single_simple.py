@@ -6,7 +6,7 @@ import sys
 import munch
 
 from SpeakerVerSim.common import (
-    Message, BaseClient, BaseFrontend, BaseWorker,
+    Strategy, Message, BaseClient, BaseFrontend, BaseWorker,
     NetworkSystem, SingleVersionDatabase, GlobalStats)
 
 
@@ -176,7 +176,7 @@ class SingleVersionWorker(BaseWorker):
 
 def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config.strategy != "SSO":
+    if config.strategy != Strategy.SSO:
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

@@ -1,6 +1,7 @@
 
 """Common components."""
 import copy
+import enum
 import simpy
 from typing import Optional, Generator, Any
 import dataclasses
@@ -9,8 +10,17 @@ import random
 import munch
 
 
+class Strategy(str, enum.Enum):
+    """An enum for all strategies."""
+    SSO = "SSO"
+    SSO_SYNC = "SSO-sync"
+    SSO_HASH = "SSO-hash"
+    SSO_MUL = "SSO-mul"
+    SD = "SD"
+
+
+STRATEGIES = [x for x in Strategy.__members__.values()]
 EPS = 1e-10
-STRATEGIES = ["SSO", "SSO-sync", "SSO-hash", "SSO-mul", "SD"]
 
 
 @dataclasses.dataclass

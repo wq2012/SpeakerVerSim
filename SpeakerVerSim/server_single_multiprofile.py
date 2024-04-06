@@ -10,7 +10,7 @@ from typing import Generator
 import munch
 
 from SpeakerVerSim.common import (
-    Message, NetworkSystem, MultiVersionDatabase,
+    Strategy, Message, NetworkSystem, MultiVersionDatabase,
     GlobalStats)
 from SpeakerVerSim import server_single_simple
 
@@ -55,7 +55,7 @@ class MultiProfileFrontend(server_single_simple.ForegroundReenrollFrontend):
 
 def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config.strategy != "SSO-mul":
+    if config.strategy != Strategy.SSO_MUL:
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

@@ -6,7 +6,7 @@ import copy
 import munch
 
 from SpeakerVerSim.common import (
-    Message, BaseFrontend, BaseWorker, NetworkSystem,
+    Strategy, Message, BaseFrontend, BaseWorker, NetworkSystem,
     MultiVersionDatabase, GlobalStats)
 from SpeakerVerSim import server_single_simple
 
@@ -144,7 +144,9 @@ class DoubleVersionNetworkSystem(NetworkSystem):
 
 def simulate(config: munch.Munch) -> GlobalStats:
     """Run simulation."""
-    if config.strategy != "SD":
+    if config.strategy != Strategy.SD:
+        print(config.strategy)
+        print(Strategy.SD)
         raise ValueError("Incorrect strategy being used.")
     env = simpy.Environment()
     stats = GlobalStats(config=config)

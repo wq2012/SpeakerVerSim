@@ -1,5 +1,5 @@
 """The simulator API to simplify calling different strategies."""
-from SpeakerVerSim.common import GlobalStats
+from SpeakerVerSim.common import Strategy, GlobalStats
 from SpeakerVerSim import server_single_simple
 from SpeakerVerSim import server_single_sync
 from SpeakerVerSim import server_single_hash
@@ -30,15 +30,16 @@ def simulate(config: Union[str, munch.Munch]) -> GlobalStats:
             config = munch.Munch.fromDict(yaml.safe_load(f))
 
     strategy = config.strategy
-    if strategy == "SSO":
-        return server_single_simple.simulate(config)
-    elif strategy == "SSO-sync":
-        return server_single_sync.simulate(config)
-    elif strategy == "SSO-hash":
-        return server_single_hash.simulate(config)
-    elif strategy == "SSO-mul":
-        return server_single_multiprofile.simulate(config)
-    elif strategy == "SD":
-        return server_double.simulate(config)
-    else:
-        raise ValueError(f"Strategy not supported: {strategy}")
+    match strategy:
+        case Strategy.SSO:
+            return server_single_simple.simulate(config)
+        case Strategy.SSO_SYNC:
+            return server_single_sync.simulate(config)
+        case Strategy.SSO_HASH:
+            return server_single_hash.simulate(config)
+        case Strategy.SSO_MUL:
+            return server_single_multiprofile.simulate(config)
+        case Strategy.SD:
+            return server_double.simulate(config)
+        case _:
+            raise ValueError(f"Strategy not supported: {strategy}")
