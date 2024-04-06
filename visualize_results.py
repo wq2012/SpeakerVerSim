@@ -213,7 +213,8 @@ def main():
         num_users=1,
         label="Backward bounce rate (%)",
         figure_name="backward_bounce_rate.png",
-        get_metrics=lambda x: x.backward_bounce_count / x.total_num_messages * 100.0,
+        get_metrics=lambda x: (x.backward_bounce_count /
+                               x.total_num_messages * 100.0),
     )
 
     # Workload.
