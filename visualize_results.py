@@ -167,21 +167,21 @@ def main():
     # End-to-end latency.
     visualize_single_run_metrics(
         num_users=1,
-        label="End-to-end latency",
+        label="End-to-end latency (s)",
         figure_name="e2e_latency.png",
         get_metrics=lambda x: x.client_return_time - x.client_send_time,
     )
 
     visualize_aggregated_metrics(
         num_users=1,
-        label="Average end-to-end latency",
+        label="Average end-to-end latency (s)",
         figure_name="average_e2e_latency.png",
         get_metrics=lambda x: x.average_e2e_latency,
     )
 
     visualize_aggregated_metrics(
         num_users=1,
-        label="Max end-to-end latency",
+        label="Max end-to-end latency (s)",
         figure_name="max_e2e_latency.png",
         get_metrics=lambda x: x.max_e2e_latency,
     )
@@ -211,9 +211,9 @@ def main():
     # Backward bounce rate.
     visualize_aggregated_metrics(
         num_users=1,
-        label="Backward bounce rate",
+        label="Backward bounce rate (%)",
         figure_name="backward_bounce_rate.png",
-        get_metrics=lambda x: x.backward_bounce_count / x.total_num_messages,
+        get_metrics=lambda x: x.backward_bounce_count / x.total_num_messages * 100.0,
     )
 
     # Workload.
@@ -226,7 +226,7 @@ def main():
     # SSO-sync sweep interval.
     visualize_sso_sync_sweep_interval(
         num_users=1,
-        label="Average end-to-end latency",
+        label="Average end-to-end latency (s)",
         figure_name="average_e2e_latency_sweep_interval.png",
         get_metrics=lambda x: x.average_e2e_latency,
     )
