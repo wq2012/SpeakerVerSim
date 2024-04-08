@@ -151,7 +151,7 @@ def visualize_sso_sync_sweep_interval(
                 hue.append(num_workers)
     ax = sns.boxplot(x=x, y=y, hue=hue)
     ax.legend(title="Number of workers")
-    ax.set_xlabel("Version query interval")
+    ax.set_xlabel("Version query interval (s)")
     ax.set_ylabel(label)
     plt.tight_layout()
     plt.savefig(os.path.join("figures", figure_name))
