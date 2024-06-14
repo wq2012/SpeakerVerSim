@@ -1,10 +1,11 @@
 # SpeakerVerSim [![Python application](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml/badge.svg)](https://github.com/wq2012/SpeakerVerSim/actions/workflows/python-app.yml) [![PyPI Version](https://img.shields.io/pypi/v/SpeakerVerSim.svg)](https://pypi.python.org/pypi/SpeakerVerSim) [![Python Versions](https://img.shields.io/pypi/pyversions/SpeakerVerSim.svg)](https://pypi.org/project/SpeakerVerSim) [![Downloads](https://static.pepy.tech/badge/SpeakerVerSim)](https://pepy.tech/project/SpeakerVerSim)
 
+![graphical_abstract](resources/graphical_abstract.jpg)
 
 ## Overview
 SpeakerVerSim is an easily-extensible Python-based simulation framework for different version control strategies of speaker recognition systems under different network configurations.
 
-These simulations are used in the paper [Version Control of Speaker Recognition Systems](https://arxiv.org/abs/2007.12069).
+These simulations are used in the paper [Version Control of Speaker Recognition Systems](https://www.sciencedirect.com/science/article/pii/S0164121224001675) ([arXiv version](https://arxiv.org/abs/2007.12069)).
 
 ## How to use
 
@@ -96,10 +97,15 @@ Each version control strategy is implemented by creating a set of client, fronte
 ## Citation
 
 ```
-@article{wang2020version,
-  title={Version control of speaker recognition systems},
-  author={Wang, Quan and Moreno, Ignacio Lopez},
-  journal={arXiv preprint arXiv:2007.12069},
-  year={2020}
+@article{WANG2024112122,
+  title = {Version control of speaker recognition systems},
+  journal = {Journal of Systems and Software},
+  volume = {216},
+  pages = {112122},
+  year = {2024},
+  issn = {0164-1212},
+  doi = {https://doi.org/10.1016/j.jss.2024.112122},
+  url = {https://www.sciencedirect.com/science/article/pii/S0164121224001675},
+  author = {Quan Wang and Ignacio {Lopez Moreno}},
 }
 ```
