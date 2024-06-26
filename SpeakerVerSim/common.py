@@ -122,7 +122,7 @@ class Actor(abc.ABC):
         self.message_pool = simpy.Store(env)
 
     @abc.abstractmethod
-    def setup() -> None:
+    def setup(self) -> None:
         """Function to add processes and other initializations."""
         pass
 
