@@ -258,7 +258,7 @@ class BaseWorker(Actor):
 class SingleVersionDatabase(BaseDatabase):
     """Database storing a single version of profile for each user."""
 
-    def setup(self):
+    def setup(self) -> None:
         """No processes."""
         pass
 
@@ -295,7 +295,7 @@ class SingleVersionDatabase(BaseDatabase):
 class MultiVersionDatabase(BaseDatabase):
     """Database storing multiple versions of profile for each user."""
 
-    def setup(self):
+    def setup(self) -> None:
         """No processes."""
         pass
 
