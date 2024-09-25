@@ -2,13 +2,16 @@
 
 import setuptools
 
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 DESCRIPTION = (
     "Simulation framework for version control strategies "
     "of speaker recognition systems.")
 
 with open("README.md", "r") as file_object:
     LONG_DESCRIPTION = file_object.read()
+
+with open("requirements.txt") as file_object:
+    INSTALL_REQUIRES = file_object.read().splitlines()
 
 setuptools.setup(
     name="SpeakerVerSim",
@@ -25,4 +28,5 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
+    install_requires=INSTALL_REQUIRES,
 )
